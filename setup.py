@@ -1,14 +1,14 @@
 #!/usr/bin/env python
+from pathlib import Path
+
 from setuptools import setup
 
 from devcontainer_manager import version
 
 requirements = [
-    "typer>=0.4.0",
-    "cookiecutter>=1.7.0",
-    "pyyaml>=5.3.1",
-    "mergedeep",
+    req for req in Path("requirements.txt").read_text().splitlines() if req
 ]
+
 
 setup(
     name="devcontainer_manager",
