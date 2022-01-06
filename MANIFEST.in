@@ -1,0 +1,2 @@
+recursive-include devcontainer_manager/templates *
+exclude devcontainer_manager/templates/cookiecutter.json

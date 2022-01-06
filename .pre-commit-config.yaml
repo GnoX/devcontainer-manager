@@ -1,0 +1,46 @@
+repos:
+    - repo: https://github.com/timothycrosley/isort
+      rev: 5.5.4
+      hooks:
+          - id: isort
+            name: Sorting imports
+            args: [--settings-path, pyproject.toml]
+    - repo: https://github.com/psf/black
+      rev: 19.3b0
+      hooks:
+          - id: black
+            name: Formatting python files with black
+            args: [--config=pyproject.toml]
+            language: python
+    - repo: https://github.com/pre-commit/mirrors-mypy
+      rev: v0.902
+      hooks:
+          - id: mypy
+            args: [--no-strict-optional, --ignore-missing-imports]
+            additional_dependencies:
+                - types-PyYAML
+                - types-Jinja2
+    - repo: https://github.com/pre-commit/pre-commit-hooks.git
+      rev: v2.3.0
+      hooks:
+          - id: mixed-line-ending
+            name: Checking line-ending formating
+          - id: trailing-whitespace
+            name: Fixing trailing whitespaces
+            args: [--markdown-linebreak-ext=md]
+          - id: end-of-file-fixer
+            name: Fixing EOF formating
+          - id: check-yaml
+            name: Checking config formating
+            args: [.pre-commit-config.yaml]
+    - repo: https://github.com/pycqa/flake8
+      rev: 3.9.2
+      hooks:
+          - id: flake8
+            entry: pflake8
+            additional_dependencies: [pyproject-flake8]
+    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+      rev: 0.1.0
+      hooks:
+          - id: yamlfmt
+            args: [--mapping, "4", --sequence, "6", --offset, "4", --preserve-quotes, --implicit_start]
