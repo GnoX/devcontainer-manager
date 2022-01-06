@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# VSCode config
+.devcontainer/
+.settings/
+
+# Generated files
+devcontainer_manager/templates/cookiecutter.json

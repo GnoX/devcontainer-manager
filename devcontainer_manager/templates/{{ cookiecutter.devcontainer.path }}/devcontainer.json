@@ -1,0 +1,25 @@
+{
+    "name": "{{ cookiecutter.devcontainer.name }}",
+    "workspaceMount": "src=${localWorkspaceFolder},dst={{ cookiecutter.devcontainer.workspace_path }},type=bind,consistency=cached",
+    "workspaceFolder": "{{ cookiecutter.devcontainer.workspace_path }}",
+    "mounts": [
+        {%- for mount in cookiecutter.devcontainer.mounts %}
+        "src={{ mount.split(':')[0] }},dst={{ mount.split(':')[1] }},type=bind,consistency=cached",
+        {%- endfor %}
+    ],
+    "image": "{{ cookiecutter.devcontainer.image }}",
+    "userEnvProbe": "loginInteractiveShell",
+    "runArgs": [
+        "--name", "{{ cookiecutter.devcontainer.container_name }}",
+        "--hostname", "{{ cookiecutter.devcontainer.container_hostname }}",
+        {%- for arg in cookiecutter.devcontainer.run_args %}
+        "{{ arg }}",
+        {%- endfor %}
+    ],
+    "extensions": [
+        {%- for extension in cookiecutter.devcontainer.extensions %}
+        "{{ extension }}",
+        {%- endfor %}
+    ]
+
+}
