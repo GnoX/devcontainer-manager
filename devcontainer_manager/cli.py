@@ -51,14 +51,14 @@ def create_config(
     force: bool = False,
 ):
     config = default_config()
+
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    if config_path.exists() and (
-        not force
-        or not typer.confirm(
+
+    if config_path.exists() and not force:
+        if not typer.confirm(
             f"Config '{config_path}' already exists, overwrite?"
-        )
-    ):
-        raise typer.Abort()
+        ):
+            raise typer.Abort()
 
     config_path.write_text(yaml.dump(config))
 
