@@ -1,11 +1,9 @@
 import json
 from pathlib import Path
 
+import oyaml as yaml
 import typer
-import yaml
 from cookiecutter.main import cookiecutter
-
-from devcontainer_manager.util import setup_yaml
 
 from .config import default_config, parse_config
 
@@ -29,7 +27,9 @@ def conf_callback(ctx: typer.Context, param: typer.CallbackParam, value: Path):
 @app.command(context_settings={"allow_extra_args": True})
 def generate(
     ctx: typer.Context,
-    config_path: Path = typer.Argument("config.yaml", callback=conf_callback),
+    config_path: Path = typer.Argument(
+        "devcontainer_config.yaml", callback=conf_callback
+    ),
 ):
     config = parse_config(config_path, ctx.args)
 
@@ -39,20 +39,19 @@ def generate(
         TEMPLATE_DIR.as_posix(), no_input=True, overwrite_if_exists=True
     )
 
-    if config["dockerfile"] is None:
-        devcontainer_dir = Path(config["devcontainer"]["path"])
-        (devcontainer_dir / "Dockerfile").unlink()
+    devcontainer_dir = Path(config["devcontainer"]["path"])
+    if config["dockerfile"]["file"] is None:
+        (devcontainer_dir / "devcontainer.Dockerfile").unlink()
         (devcontainer_dir / "build.sh").unlink()
 
 
 @app.command()
-def create_config(config_path: Path = Path("config.yaml")):
+def create_config(config_path: Path = Path("devcontainer_config.yaml")):
     config = default_config()
-    config_path.write_text(yaml.dump(config, default_flow_style=False))
+    config_path.write_text(yaml.dump(config))
 
 
 def main():
-    setup_yaml()
     app()
 
 
