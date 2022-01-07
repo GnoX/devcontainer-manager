@@ -20,6 +20,6 @@
         {%- for extension in cookiecutter.devcontainer.extensions %}
         "{{ extension }}",
         {%- endfor %}
-    ]
-
+    ],
+    "shutdownAction": "none"
 }
