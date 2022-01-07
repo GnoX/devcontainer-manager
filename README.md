@@ -1,6 +1,9 @@
 # VSCode Devcontainer Manager
 
+[![PyPI](https://img.shields.io/pypi/v/devcontainer-manager?logo=pypi&style=flat-square)](https://pypi.org/project/devcontainer-manager)
+
 Devcontainer Manager is a command line tool that manages Visual Studio Code
+
 devcontainer configurations written in python.
 
 ## Installation
