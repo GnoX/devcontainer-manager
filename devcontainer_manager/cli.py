@@ -46,8 +46,20 @@ def generate(
 
 
 @app.command()
-def create_config(config_path: Path = Path("devcontainer_config.yaml")):
+def create_config(
+    config_path: Path = typer.Argument("devcontainer_config.yaml"),
+    force: bool = False,
+):
     config = default_config()
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    if config_path.exists() and (
+        not force
+        or not typer.confirm(
+            f"Config '{config_path}' already exists, overwrite?"
+        )
+    ):
+        raise typer.Abort()
+
     config_path.write_text(yaml.dump(config))
 
 

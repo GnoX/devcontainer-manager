@@ -24,7 +24,7 @@ def default_config():
             container_hostname="{{ devcontainer.name }}",
             extensions=[],
         ),
-        dockerfile=OrderedDict(file=None, additional_args=[]),
+        dockerfile=OrderedDict(file=None, additional_commands=[]),
     )
 
 
