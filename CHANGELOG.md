@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- template variable `project_root_basename` that resolves to root folder basename
+  of project git repository
+
+### Changed
+- changed default of `devcontainer.name` to `project_root_basename`
 
 ## [0.2.0]
 ### Added

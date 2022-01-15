@@ -36,7 +36,7 @@ devcontainer:
     path: .devcontainer
 
     # name of the dev container
-    name: dev_env
+    name: "{{ project_root_basename }}"
 
     # path in container where source will be mounted
     workspace_folder: /mnt/workspace
