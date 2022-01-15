@@ -25,6 +25,13 @@ requirements = [
 ]
 
 
+dev_requirements = [
+    req
+    for req in Path("requirements-dev.txt").read_text().splitlines()
+    if req and not req.startswith("-")
+]
+
+
 setup(
     name="devcontainer_manager",
     version=version,
@@ -34,6 +41,7 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=requirements,
     python_requires=">=3.6",
+    extras_require={"dev": dev_requirements},
     license="MIT",
     entry_points={
         "console_scripts": [

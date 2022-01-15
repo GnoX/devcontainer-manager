@@ -64,6 +64,7 @@ def create_config(
     config_path: Path = typer.Argument("devcontainer_config.yaml"),
     force: bool = typer.Option(False, "--force", "-f"),
 ):
+    GlobalConfig.load()
     config = default_config(config_path.as_posix())
 
     if config.yaml_exists() and not force:
