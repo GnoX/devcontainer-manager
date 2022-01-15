@@ -5,7 +5,9 @@ from setuptools import setup
 
 from devcontainer_manager import version
 
-default_config = Path("devcontainer_manager/default_config.yaml").read_text()
+default_config = Path(
+    "devcontainer_manager/config/default_config.yaml"
+).read_text()
 readme = (
     Path("README.md.template")
     .read_text()

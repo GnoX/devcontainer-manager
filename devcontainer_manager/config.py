@@ -1,10 +1,8 @@
 import copy
 import re
-import subprocess
 from pathlib import Path
 from typing import Any, Dict, List
 
-import jinja2
 import oyaml as yaml
 
 from .exceptions import (
@@ -12,12 +10,13 @@ from .exceptions import (
     InvalidArgumentException,
     InvalidMountStringException,
 )
+from .util import get_project_root_basename, render_recursive_template
 
 OVERRIDE_CONFIG = "overrides.yaml"
 
 DEVCONTAINER_MOUNT_STR_REGEX = re.compile(r"^src=(.+),dst=(.+)(,.+)?")
 SIMPLE_MOUNT_REGEX = re.compile(r"(?P<src>.+):(?P<dst>.+)")
-DEFAULT_CONFIG_PATH = Path(__file__).parent / "default_config.yaml"
+DEFAULT_CONFIG_PATH = Path(__file__).parent / "config" / "default_config.yaml"
 
 
 def default_config():
@@ -38,29 +37,6 @@ def resolve_mount_string(mnt_str: str):
         return mnt_str
 
     raise InvalidMountStringException(mnt_str)
-
-
-def render_recursive_template(template: str, values: dict):
-    prev = template
-    while True:
-        rendered = jinja2.Template(prev).render(**values)
-        if rendered != prev:
-            prev = rendered
-        else:
-            return rendered
-
-
-def get_project_root_basename() -> str:
-    try:
-        git_folder_path = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            check=True,
-            stdout=subprocess.PIPE,
-            universal_newlines=True,
-        ).stdout
-        return Path(git_folder_path).name
-    except subprocess.CalledProcessError:
-        return None
 
 
 def get_config_overrides(config: dict, args: List[str]):
