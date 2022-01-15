@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - template variable `project_root_basename` that resolves to root folder basename
   of project git repository
+- global config with default overrides `~/.devcontainer_manager/config.yaml`
 
 ### Changed
 - changed default of `devcontainer.name` to `project_root_basename`

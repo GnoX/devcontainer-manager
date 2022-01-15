@@ -39,14 +39,16 @@ def resolve_mount_string(mnt_str: str):
     raise InvalidMountStringException(mnt_str)
 
 
-def merge_configs(default, overwrite):
-    new_config = copy.deepcopy(default)
+def dict_merge(d, overwrite):
+    new_config = copy.deepcopy(d)
 
     for k, v in overwrite.items():
         if isinstance(v, dict):
-            new_config[k] = merge_configs(default[k], v)
+            orig_dict = d[k] if k in d else dict()
+            new_config[k] = dict_merge(orig_dict, v)
         elif isinstance(v, list):
-            new_config[k] = list(set(default[k] + v))
+            orig_list = d[k] if k in d else list()
+            new_config[k] = list(set(orig_list + v))
         else:
             new_config[k] = v
 
@@ -55,11 +57,23 @@ def merge_configs(default, overwrite):
 
 class WritableNamespace:
     def __init__(self, d):
-        self.__dict__ = d
+        self.__dict__ = d if d is not None else {}
+
+    def __getattr__(self, name: str) -> Any:
+        return WritableNamespace(None)
+
+    def __bool__(self):
+        return bool(self.__dict__)
 
     def __repr__(self) -> str:
         attr_str = ", ".join([f"{k}='{v}'" for k, v in self.__dict__.items()])
         return f"{self.__class__.__name__}({attr_str})"
+
+    def __eq__(self, o: object) -> bool:
+        if o is None and not self.__dict__:
+            return True
+
+        return super().__eq__(o)
 
 
 class Config(WritableNamespace):
@@ -70,26 +84,12 @@ class Config(WritableNamespace):
         self.config_path = path
 
     def as_dict(self):
-        d = copy.deepcopy(self.__dict__)
+        d = self.__dict__.copy()
         d.pop("config_path")
         return d
 
     def as_yaml(self) -> str:
         return yaml.dump(self.as_dict())
-
-    def _get_config_path(self, config_path=None):
-        if config_path is None:
-            config_path = self.config_path
-
-        if config_path is None:
-            return RuntimeError("Config path is empty")
-
-        config_path = Path(config_path)
-        if config_path.is_dir():
-            return RuntimeError(
-                f"Config path must be file but is dir: '{config_path}'"
-            )
-        return config_path
 
     def write_yaml(self, config_path=None):
         config_path = self._get_config_path(config_path)
@@ -100,7 +100,7 @@ class Config(WritableNamespace):
         return self._get_config_path().exists()
 
     def merge(self, other: "Config"):
-        return Config(merge_configs(self.as_dict(), other.as_dict()))
+        return type(self)(dict_merge(self.as_dict(), other.as_dict()))
 
     def render(self):
         project_name = get_project_root_basename().strip()
@@ -116,11 +116,10 @@ class Config(WritableNamespace):
         config = DevcontainerConfig(config_dict)
         config = default_config().merge(config)
 
-        if config.docker:
-            if config.docker.file:
-                dockerfile_path = Path(config.docker.file)
-                if dockerfile_path.exists():
-                    config.docker.file = dockerfile_path.read_text()
+        if config.docker.file:
+            dockerfile_path = Path(config.docker.file)
+            if dockerfile_path.exists():
+                config.docker.file = dockerfile_path.read_text()
 
         config.devcontainer.workspace_mount = resolve_mount_string(
             config.devcontainer.workspace_mount
@@ -161,6 +160,20 @@ class Config(WritableNamespace):
         overrides["base_config"] = self.config_path
         return OverrideConfig(overrides)
 
+    def _get_config_path(self, config_path=None):
+        if config_path is None:
+            config_path = self.config_path
+
+        if config_path is None:
+            return RuntimeError("Config path is empty")
+
+        config_path = Path(config_path)
+        if config_path.is_dir():
+            return RuntimeError(
+                f"Config path must be file but is dir: '{config_path}'"
+            )
+        return config_path
+
     @staticmethod
     def parse(path: str, override_path: str = None):
         file_path = Path(path)
@@ -182,14 +195,10 @@ class DevcontainerConfig(Config):
 
     def __getattribute__(self, name: str) -> Any:
         if name in ["devcontainer", "docker"]:
-            return WritableNamespace(self.__dict__[name])
+            d = self.__dict__[name] if name in self.__dict__ else None
+            return WritableNamespace(d)
 
         return super().__getattribute__(name)
-
-    def merge(self, other: "Config"):
-        return DevcontainerConfig(
-            merge_configs(self.as_dict(), other.as_dict())
-        )
 
 
 class OverrideConfig(DevcontainerConfig):
@@ -219,6 +228,6 @@ class OverrideConfig(DevcontainerConfig):
         return super().as_dict()["config_base"].as_dict()
 
     def as_yaml(self) -> str:
-        d = copy.deepcopy(super().as_dict())
+        d = super().as_dict().copy()
         d.pop("config_base")
         return yaml.dump(d)
