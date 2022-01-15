@@ -9,16 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0]
 ### Added
 - config options:
-    - devcontainer.workspace_mount - same as workspaceMount in devcontainer.json
-    - user_env_probe - same as userEnvProbe
-    - shutdown_action - same as shutdownAction
-    - additional_options_json - list of additional json options to append to
-      devcontainer.json
+    - `devcontainer.workspace_mount` - same as workspaceMount in `devcontainer.json`
+    - `user_env_probe` - same as `userEnvProbe`
+    - `shutdown_action` - same as `shutdownAction`
+    - `additional_options_json` - list of additional json options to append to
+      `devcontainer.json`
 ### Changed
 - renamed config options:
-    - devcontainer.path -> path
-    - devcontainer.workspace_path -> devcontainer.workspace_folder
-    - dockerfile -> docker
+    - `devcontainer.path` -> `path`
+    - `devcontainer.workspace_path` -> `devcontainer.workspace_folder`
+    - `dockerfile` -> `docker`
 
 ### Fixed
 - crash in generate if devcontainer folder does not exist
