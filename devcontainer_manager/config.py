@@ -1,6 +1,5 @@
 import copy
 import re
-from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -17,27 +16,11 @@ OVERRIDE_CONFIG = "overrides.yaml"
 
 DEVCONTAINER_MOUNT_STR_REGEX = re.compile(r"^src=(.+),dst=(.+)(,.+)?")
 SIMPLE_MOUNT_REGEX = re.compile(r"(?P<src>.+):(?P<dst>.+)")
+DEFAULT_CONFIG_PATH = Path(__file__).parent / "default_config.yaml"
 
 
 def default_config():
-    return OrderedDict(
-        path=".devcontainer",
-        devcontainer=OrderedDict(
-            name="dev_env",
-            workspace_mount="${localWorkspaceFolder}:/mnt/workspace",
-            workspace_folder="/mnt/workspace",
-            user_env_probe="loginInteractiveShell",
-            shutdown_action="none",
-            image="dev-env-dev",
-            mounts=[],
-            run_args=[],
-            container_name="{{ devcontainer.name }}",
-            container_hostname="{{ devcontainer.name }}",
-            extensions=[],
-            additional_options_json=[],
-        ),
-        docker=OrderedDict(file=None, additional_commands=[]),
-    )
+    return yaml.safe_load(DEFAULT_CONFIG_PATH.read_text())
 
 
 def resolve_mount_string(mnt_str: str):

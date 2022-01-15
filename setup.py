@@ -5,7 +5,13 @@ from setuptools import setup
 
 from devcontainer_manager import version
 
-readme = Path("README.md").read_text()
+default_config = Path("devcontainer_manager/default_config.yaml").read_text()
+readme = (
+    Path("README.md.template")
+    .read_text()
+    .format(devcontainer_config=default_config)
+)
+Path("README.md").write_text(readme)
 
 requirements = [
     req for req in Path("requirements.txt").read_text().splitlines() if req
