@@ -1,5 +1,6 @@
 import copy
 import re
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -37,6 +38,29 @@ def resolve_mount_string(mnt_str: str):
         return mnt_str
 
     raise InvalidMountStringException(mnt_str)
+
+
+def render_recursive_template(template: str, values: dict):
+    prev = template
+    while True:
+        rendered = jinja2.Template(prev).render(**values)
+        if rendered != prev:
+            prev = rendered
+        else:
+            return rendered
+
+
+def get_project_root_basename() -> str:
+    try:
+        git_folder_path = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            check=True,
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        ).stdout
+        return Path(git_folder_path).name
+    except subprocess.CalledProcessError:
+        return None
 
 
 def get_config_overrides(config: dict, args: List[str]):
@@ -115,8 +139,15 @@ def parse_config(
         override_config.parent.mkdir(parents=True, exist_ok=True)
         override_config.write_text(yaml.dump(overrides))
 
+    project_name = get_project_root_basename().strip()
+    if project_name is None:
+        project_name = "dev-env"
+
+    values = copy.deepcopy(config_dict)
+    values["project_root_basename"] = project_name
+
     config_dict = yaml.safe_load(
-        jinja2.Template(config_override).render(**config_dict)
+        render_recursive_template(config_override, values)
     )
     config = merge_configs(default_config(), config_dict)
 
