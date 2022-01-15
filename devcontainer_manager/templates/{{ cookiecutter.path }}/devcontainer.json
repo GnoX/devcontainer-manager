@@ -1,14 +1,16 @@
 {
     "name": "{{ cookiecutter.devcontainer.name }}",
-    "workspaceMount": "src=${localWorkspaceFolder},dst={{ cookiecutter.devcontainer.workspace_path }},type=bind,consistency=cached",
-    "workspaceFolder": "{{ cookiecutter.devcontainer.workspace_path }}",
+    "workspaceMount": "{{ cookiecutter.devcontainer.workspace_mount }}",
+    "workspaceFolder": "{{ cookiecutter.devcontainer.workspace_folder }}",
     "mounts": [
         {%- for mount in cookiecutter.devcontainer.mounts %}
-        "src={{ mount.split(':')[0] }},dst={{ mount.split(':')[1] }},type=bind,consistency=cached",
+        {{ mount }}
         {%- endfor %}
     ],
     "image": "{{ cookiecutter.devcontainer.image }}",
-    "userEnvProbe": "loginInteractiveShell",
+    {%- if cookiecutter.devcontainer.user_env_probe is not none %}
+    "userEnvProbe": "{{ cookiecutter.devcontainer.user_env_probe }}",
+    {%- endif %}
     "runArgs": [
         "--name", "{{ cookiecutter.devcontainer.container_name }}",
         "--hostname", "{{ cookiecutter.devcontainer.container_hostname }}",
@@ -21,5 +23,10 @@
         "{{ extension }}",
         {%- endfor %}
     ],
-    "shutdownAction": "none"
+    {%- if cookiecutter.devcontainer.shutdown_action is not none %}
+    "shutdownAction": "{{ cookiecutter.devcontainer.shutdown_action }}",
+    {%- endif %}
+    {%- for option in cookiecutter.devcontainer.additional_options_json %}
+    {{ option }},
+    {%- endfor %}
 }

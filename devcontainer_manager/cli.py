@@ -39,8 +39,8 @@ def generate(
         TEMPLATE_DIR.as_posix(), no_input=True, overwrite_if_exists=True
     )
 
-    devcontainer_dir = Path(config["devcontainer"]["path"])
-    if config["dockerfile"]["file"] is None:
+    devcontainer_dir = Path(config["path"])
+    if config["docker"]["file"] is None:
         (devcontainer_dir / "devcontainer.Dockerfile").unlink()
         (devcontainer_dir / "build.sh").unlink()
 
@@ -48,7 +48,7 @@ def generate(
 @app.command()
 def create_config(
     config_path: Path = typer.Argument("devcontainer_config.yaml"),
-    force: bool = False,
+    force: bool = typer.Option(False, "--force", "-f"),
 ):
     config = default_config()
 

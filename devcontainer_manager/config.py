@@ -1,4 +1,5 @@
 import copy
+import re
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List
@@ -6,26 +7,53 @@ from typing import Any, Dict, List
 import jinja2
 import oyaml as yaml
 
-from .exceptions import ConfigMovedException, InvalidArgumentException
+from .exceptions import (
+    ConfigMovedException,
+    InvalidArgumentException,
+    InvalidMountStringException,
+)
 
 OVERRIDE_CONFIG = "overrides.yaml"
+
+DEVCONTAINER_MOUNT_STR_REGEX = re.compile(r"^src=(.+),dst=(.+)(,.+)?")
+SIMPLE_MOUNT_REGEX = re.compile(r"(?P<src>.+):(?P<dst>.+)")
 
 
 def default_config():
     return OrderedDict(
+        path=".devcontainer",
         devcontainer=OrderedDict(
-            path=".devcontainer",
             name="dev_env",
-            workspace_path="/mnt/workspace",
+            workspace_mount="${localWorkspaceFolder}:/mnt/workspace",
+            workspace_folder="/mnt/workspace",
+            user_env_probe="loginInteractiveShell",
+            shutdown_action="none",
             image="dev-env-dev",
             mounts=[],
             run_args=[],
             container_name="{{ devcontainer.name }}",
             container_hostname="{{ devcontainer.name }}",
             extensions=[],
+            additional_options_json=[],
         ),
-        dockerfile=OrderedDict(file=None, additional_commands=[]),
+        docker=OrderedDict(file=None, additional_commands=[]),
     )
+
+
+def resolve_mount_string(mnt_str: str):
+    match = SIMPLE_MOUNT_REGEX.match(mnt_str)
+    if match is not None:
+        return (
+            f"src={match.group('src')},"
+            f"dst={match.group('dst')},"
+            "type=bind,consistency=cached"
+        )
+
+    match = DEVCONTAINER_MOUNT_STR_REGEX.match(mnt_str)
+    if match is not None:
+        return mnt_str
+
+    raise InvalidMountStringException(mnt_str)
 
 
 def get_config_overrides(config: dict, args: List[str]):
@@ -97,10 +125,11 @@ def parse_config(
         config_dict = config_override
         config_override = yaml.dump(config_override)
 
-        devcontainer_dir = Path(config_dict["devcontainer"]["path"])
+        devcontainer_dir = Path(config_dict["path"])
         override_config = devcontainer_dir / OVERRIDE_CONFIG
 
         overrides["base_config"] = config_path.resolve().as_posix()
+        override_config.parent.mkdir(parents=True, exist_ok=True)
         override_config.write_text(yaml.dump(overrides))
 
     config_dict = yaml.safe_load(
@@ -108,13 +137,17 @@ def parse_config(
     )
     config = merge_configs(default_config(), config_dict)
 
-    dockerfile = config["dockerfile"]
-    if dockerfile is not None:
-        if "file" in dockerfile and dockerfile["file"] is not None:
-            dockerfile_path = Path(dockerfile["file"])
+    docker_config = config["docker"]
+    if docker_config is not None:
+        if "file" in docker_config and docker_config["file"] is not None:
+            dockerfile_path = Path(docker_config["file"])
             if dockerfile_path.exists():
-                dockerfile["file"] = dockerfile_path.read_text()
-        if "additional_commands" not in dockerfile:
-            dockerfile["additional_commands"] = []
+                docker_config["file"] = dockerfile_path.read_text()
+        if "additional_commands" not in docker_config:
+            docker_config["additional_commands"] = []
+
+    config["devcontainer"]["workspace_mount"] = resolve_mount_string(
+        config["devcontainer"]["workspace_mount"]
+    )
 
     return config if not return_overrides else (config, overrides)
