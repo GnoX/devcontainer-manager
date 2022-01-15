@@ -5,7 +5,7 @@ import oyaml as yaml
 import typer
 from cookiecutter.main import cookiecutter
 
-from .config import default_config, parse_config
+from .config import OVERRIDE_CONFIG, Config, OverrideConfig, default_config
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -31,16 +31,25 @@ def generate(
         "devcontainer_config.yaml", callback=conf_callback
     ),
 ):
-    config = parse_config(config_path, ctx.args)
+    config = Config.parse(config_path.as_posix())
+
+    if isinstance(config, OverrideConfig):
+        override_config = config
+    else:
+        override_config = config.override(ctx.args)
+        override_path = Path(config.path) / OVERRIDE_CONFIG
+        override_config.write_yaml(override_path)
+
+    rendered = override_config.render()
 
     cookiecutter_config = TEMPLATE_DIR / "cookiecutter.json"
-    cookiecutter_config.write_text(json.dumps(config, indent=4))
+    cookiecutter_config.write_text(json.dumps(rendered.as_dict(), indent=4))
     cookiecutter(
         TEMPLATE_DIR.as_posix(), no_input=True, overwrite_if_exists=True
     )
 
-    devcontainer_dir = Path(config["path"])
-    if config["docker"]["file"] is None:
+    devcontainer_dir = Path(config.path)
+    if config.docker is None or config.docker.file is None:
         (devcontainer_dir / "devcontainer.Dockerfile").unlink()
         (devcontainer_dir / "build.sh").unlink()
 
@@ -50,17 +59,15 @@ def create_config(
     config_path: Path = typer.Argument("devcontainer_config.yaml"),
     force: bool = typer.Option(False, "--force", "-f"),
 ):
-    config = default_config()
+    config = default_config(config_path.as_posix())
 
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-
-    if config_path.exists() and not force:
+    if config.yaml_exists() and not force:
         if not typer.confirm(
             f"Config '{config_path}' already exists, overwrite?"
         ):
             raise typer.Abort()
 
-    config_path.write_text(yaml.dump(config))
+    config.write_yaml(config_path)
 
 
 def main():

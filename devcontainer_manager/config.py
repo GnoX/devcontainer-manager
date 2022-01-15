@@ -1,7 +1,7 @@
 import copy
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import oyaml as yaml
 
@@ -19,8 +19,8 @@ SIMPLE_MOUNT_REGEX = re.compile(r"(?P<src>.+):(?P<dst>.+)")
 DEFAULT_CONFIG_PATH = Path(__file__).parent / "config" / "default_config.yaml"
 
 
-def default_config():
-    return yaml.safe_load(DEFAULT_CONFIG_PATH.read_text())
+def default_config(path: str = None):
+    return Config.parse(DEFAULT_CONFIG_PATH.as_posix(), path)
 
 
 def resolve_mount_string(mnt_str: str):
@@ -39,37 +39,6 @@ def resolve_mount_string(mnt_str: str):
     raise InvalidMountStringException(mnt_str)
 
 
-def get_config_overrides(config: dict, args: List[str]):
-    config = dict(config)
-    overrides: Dict[str, Any] = dict()
-
-    for arg in args:
-        current_level = config
-        current_overrides = overrides
-
-        parts = arg.split("=")
-        if len(parts) != 2:
-            raise InvalidArgumentException(f"Invalid parameter {arg}")
-
-        name, value = parts
-        name_parts = name.split(".")
-
-        for part in name_parts:
-            if part not in current_level:
-                raise InvalidArgumentException(f"Invalid parameter {arg}")
-
-            last_overrides = current_overrides
-            if part not in current_overrides:
-                current_overrides[part] = {}
-            current_overrides = current_overrides[part]
-            current_level = current_level[part]
-        if value.startswith("[") and value.endswith("]"):
-            last_overrides[part] = [v.strip() for v in value[1:-1].split(",")]
-        else:
-            last_overrides[part] = value
-    return overrides
-
-
 def merge_configs(default, overwrite):
     new_config = copy.deepcopy(default)
 
@@ -84,60 +53,172 @@ def merge_configs(default, overwrite):
     return new_config
 
 
-def parse_config(
-    config_path: Path, dot_args: List[str] = None, return_overrides=False
-):
-    if dot_args is None:
-        dot_args = []
-    config_dict = yaml.safe_load(config_path.read_text())
+class WritableNamespace:
+    def __init__(self, d):
+        self.__dict__ = d
 
-    if "base_config" in config_dict:
-        base_config_path = Path(config_dict["base_config"])
+    def __repr__(self) -> str:
+        attr_str = ", ".join([f"{k}='{v}'" for k, v in self.__dict__.items()])
+        return f"{self.__class__.__name__}({attr_str})"
+
+
+class Config(WritableNamespace):
+    def __init__(self, config: dict, path=None):
+        super().__init__(config)
+        if isinstance(path, Path):
+            path = str(path)
+        self.config_path = path
+
+    def as_dict(self):
+        d = copy.deepcopy(self.__dict__)
+        d.pop("config_path")
+        return d
+
+    def as_yaml(self) -> str:
+        return yaml.dump(self.as_dict())
+
+    def _get_config_path(self, config_path=None):
+        if config_path is None:
+            config_path = self.config_path
+
+        if config_path is None:
+            return RuntimeError("Config path is empty")
+
+        config_path = Path(config_path)
+        if config_path.is_dir():
+            return RuntimeError(
+                f"Config path must be file but is dir: '{config_path}'"
+            )
+        return config_path
+
+    def write_yaml(self, config_path=None):
+        config_path = self._get_config_path(config_path)
+        config_path.parent.mkdir(exist_ok=True, parents=True)
+        config_path.write_text(self.as_yaml())
+
+    def yaml_exists(self):
+        return self._get_config_path().exists()
+
+    def merge(self, other: "Config"):
+        return Config(merge_configs(self.as_dict(), other.as_dict()))
+
+    def render(self):
+        project_name = get_project_root_basename().strip()
+        if project_name is None:
+            project_name = "dev-env"
+
+        values = copy.deepcopy(self.as_dict())
+        values["project_root_basename"] = project_name
+
+        config_dict = yaml.safe_load(
+            render_recursive_template(yaml.dump(self.as_dict()), values)
+        )
+        config = DevcontainerConfig(config_dict)
+        config = default_config().merge(config)
+
+        if config.docker:
+            if config.docker.file:
+                dockerfile_path = Path(config.docker.file)
+                if dockerfile_path.exists():
+                    config.docker.file = dockerfile_path.read_text()
+
+        config.devcontainer.workspace_mount = resolve_mount_string(
+            config.devcontainer.workspace_mount
+        )
+        return config
+
+    def override(self, args: List[str]):
+        overrides: Dict[str, Any] = dict()
+        config = dict(self.__dict__)
+
+        for arg in args:
+            current_level = config
+            current_overrides = overrides
+
+            parts = arg.split("=")
+            if len(parts) != 2:
+                raise InvalidArgumentException(f"Invalid parameter {arg}")
+
+            name, value = parts
+            name_parts = name.split(".")
+
+            for part in name_parts:
+                if part not in current_level:
+                    raise InvalidArgumentException(f"Invalid parameter {arg}")
+
+                last_overrides = current_overrides
+                if part not in current_overrides:
+                    current_overrides[part] = {}
+                current_overrides = current_overrides[part]
+                current_level = current_level[part]
+            if value.startswith("[") and value.endswith("]"):
+                last_overrides[part] = [
+                    v.strip() for v in value[1:-1].split(",")
+                ]
+            else:
+                last_overrides[part] = value
+
+        overrides["base_config"] = self.config_path
+        return OverrideConfig(overrides)
+
+    @staticmethod
+    def parse(path: str, override_path: str = None):
+        file_path = Path(path)
+        if override_path is None:
+            override_path = file_path.as_posix()
+        override = Path(override_path).resolve().as_posix()
+
+        if file_path.exists() and file_path.is_file():
+            config_dict = yaml.safe_load(file_path.read_text())
+            if "base_config" in config_dict:
+                return OverrideConfig(config_dict, override)
+
+            return DevcontainerConfig(config_dict, override)
+
+
+class DevcontainerConfig(Config):
+    def __init__(self, config: dict, path: Union[str, Path] = None):
+        super().__init__(config, path)
+
+    def __getattribute__(self, name: str) -> Any:
+        if name in ["devcontainer", "docker"]:
+            return WritableNamespace(self.__dict__[name])
+
+        return super().__getattribute__(name)
+
+    def merge(self, other: "Config"):
+        return DevcontainerConfig(
+            merge_configs(self.as_dict(), other.as_dict())
+        )
+
+
+class OverrideConfig(DevcontainerConfig):
+    def __init__(self, config: dict, path: Union[str, Path] = None):
+        base_config_path = Path(config["base_config"])
         if not base_config_path.exists():
             raise ConfigMovedException(
                 f"Config '{base_config_path}' was deleted or moved"
             )
-        config_dict.pop("base_config")
 
-        config_base = yaml.safe_load(base_config_path.read_text())
-        config_override = yaml.dump(merge_configs(config_base, config_dict))
-    else:
-        overrides = get_config_overrides(config_dict, dot_args)
+        super().__init__(config, path)
+        self.config_base = DevcontainerConfig(
+            yaml.safe_load(base_config_path.read_text())
+        )
 
-        config_override = merge_configs(config_dict, overrides)
-        config_dict = config_override
-        config_override = yaml.dump(config_override)
+    def __getattribute__(self, name: str) -> Any:
+        if (
+            name not in ["__dict__", "config_base"]
+            and name not in self.__dict__
+            and name in self.config_base.__dict__
+        ):
+            return getattr(self.config_base, name)
 
-        devcontainer_dir = Path(config_dict["path"])
-        override_config = devcontainer_dir / OVERRIDE_CONFIG
+        return super().__getattribute__(name)
 
-        overrides["base_config"] = config_path.resolve().as_posix()
-        override_config.parent.mkdir(parents=True, exist_ok=True)
-        override_config.write_text(yaml.dump(overrides))
+    def as_dict(self):
+        return super().as_dict()["config_base"].as_dict()
 
-    project_name = get_project_root_basename().strip()
-    if project_name is None:
-        project_name = "dev-env"
-
-    values = copy.deepcopy(config_dict)
-    values["project_root_basename"] = project_name
-
-    config_dict = yaml.safe_load(
-        render_recursive_template(config_override, values)
-    )
-    config = merge_configs(default_config(), config_dict)
-
-    docker_config = config["docker"]
-    if docker_config is not None:
-        if "file" in docker_config and docker_config["file"] is not None:
-            dockerfile_path = Path(docker_config["file"])
-            if dockerfile_path.exists():
-                docker_config["file"] = dockerfile_path.read_text()
-        if "additional_commands" not in docker_config:
-            docker_config["additional_commands"] = []
-
-    config["devcontainer"]["workspace_mount"] = resolve_mount_string(
-        config["devcontainer"]["workspace_mount"]
-    )
-
-    return config if not return_overrides else (config, overrides)
+    def as_yaml(self) -> str:
+        d = copy.deepcopy(super().as_dict())
+        d.pop("config_base")
+        return yaml.dump(d)

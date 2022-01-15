@@ -31,10 +31,10 @@ NOTE: There is currently no way to set the parameters from the command line.
 
 The following code displays all of the options and defaults
 ```yaml
-devcontainer:
-    # path to generate devcontainer files
-    path: .devcontainer
+# path to generate devcontainer files
+path: .devcontainer
 
+devcontainer:
     # name of the dev container
     name: "{{ project_root_basename }}"
 

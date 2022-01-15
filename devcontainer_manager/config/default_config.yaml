@@ -1,7 +1,7 @@
-devcontainer:
-    # path to generate devcontainer files
-    path: .devcontainer
+# path to generate devcontainer files
+path: .devcontainer
 
+devcontainer:
     # name of the dev container
     name: "{{ project_root_basename }}"
 
