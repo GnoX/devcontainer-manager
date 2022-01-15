@@ -5,6 +5,8 @@ import oyaml as yaml
 import typer
 from cookiecutter.main import cookiecutter
 
+from devcontainer_manager.global_config import GlobalConfig
+
 from .config import OVERRIDE_CONFIG, Config, OverrideConfig, default_config
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -32,6 +34,7 @@ def generate(
     ),
 ):
     config = Config.parse(config_path.as_posix())
+    global_config = GlobalConfig.load()
 
     if isinstance(config, OverrideConfig):
         override_config = config
@@ -40,7 +43,9 @@ def generate(
         override_path = Path(config.path) / OVERRIDE_CONFIG
         override_config.write_yaml(override_path)
 
-    rendered = override_config.render()
+    default_merged = default_config().merge(global_config.global_defaults)
+    global_merged = default_merged.merge(override_config)
+    rendered = global_merged.render()
 
     cookiecutter_config = TEMPLATE_DIR / "cookiecutter.json"
     cookiecutter_config.write_text(json.dumps(rendered.as_dict(), indent=4))
@@ -49,7 +54,7 @@ def generate(
     )
 
     devcontainer_dir = Path(config.path)
-    if config.docker is None or config.docker.file is None:
+    if not config.docker.file:
         (devcontainer_dir / "devcontainer.Dockerfile").unlink()
         (devcontainer_dir / "build.sh").unlink()
 

@@ -70,6 +70,5 @@ path to template config, so if this file is moved, re-generation will fail.
 ## TODOS and Ideas
 - automatic indexing of all overrides of master template
 - templates from repositories, snippets or web pages
-- automatic project name detection for simpler override generation
 - better documentation and examples
 - tests and CI
