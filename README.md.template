@@ -44,9 +44,16 @@ To generate the configuration
 devcontainer_manager generate <config-path> [key_overrides]
 ```
 
-Using default config, this would generate `devcontainer.json`
-and `overrides.yaml` (more in the [Overrides](#per-project-template-overrides)
-section) files (as dockerfile.path is null by default).
+Using default config, this would generate `devcontainer.json` and `overrides.yaml`
+(more in the [Project Overrides](#per-project-template-overrides) section) files
+(as docker.path is null by default).
+
+### Global Configuration
+Global configuration can be found in `~/.devcontainer_manager/config.yaml` and
+contains following options:
+```yaml
+{global_config}
+```
 
 ### Per Project Template Overrides
 Note that `generate` command does have optional arguments that take form of

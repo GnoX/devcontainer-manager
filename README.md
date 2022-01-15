@@ -116,9 +116,24 @@ To generate the configuration
 devcontainer_manager generate <config-path> [key_overrides]
 ```
 
-Using default config, this would generate `devcontainer.json`
-and `overrides.yaml` (more in the [Overrides](#per-project-template-overrides)
-section) files (as dockerfile.path is null by default).
+Using default config, this would generate `devcontainer.json` and `overrides.yaml`
+(more in the [Project Overrides](#per-project-template-overrides) section) files
+(as docker.path is null by default).
+
+### Global Configuration
+Global configuration can be found in `~/.devcontainer_manager/config.yaml` and
+contains following options:
+```yaml
+# overrides for defaults in the same form as template configs, for example
+# adding git-graph extension to all templates
+#
+# global_defaults:
+#   devcontainer:
+#     extensions:
+#       - mhutchie.git-graph
+global_defaults:
+
+```
 
 ### Per Project Template Overrides
 Note that `generate` command does have optional arguments that take form of
@@ -142,6 +157,5 @@ path to template config, so if this file is moved, re-generation will fail.
 ## TODOS and Ideas
 - automatic indexing of all overrides of master template
 - templates from repositories, snippets or web pages
-- automatic project name detection for simpler override generation
 - better documentation and examples
 - tests and CI

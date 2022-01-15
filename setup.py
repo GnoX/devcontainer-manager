@@ -8,10 +8,15 @@ from devcontainer_manager import version
 default_config = Path(
     "devcontainer_manager/config/default_config.yaml"
 ).read_text()
+default_global_config = Path(
+    "devcontainer_manager/config/default_global_config.yaml"
+).read_text()
 readme = (
     Path("README.md.template")
     .read_text()
-    .format(devcontainer_config=default_config)
+    .format(
+        devcontainer_config=default_config, global_config=default_global_config
+    )
 )
 Path("README.md").write_text(readme)
 
