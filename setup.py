@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from pathlib import Path
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 from devcontainer_manager import version
 
@@ -48,7 +48,7 @@ setup(
             "devcontainer_manager = devcontainer_manager.__main__:main"
         ]
     },
-    packages=["devcontainer_manager"],
+    packages=find_packages(),
     package_dir={"devcontainer_manager": "devcontainer_manager"},
     include_package_data=True,
 )
