@@ -22,7 +22,7 @@ devcontainer:
     user_env_probe: loginInteractiveShell
 
     # devcontainer image to use
-    image: dev-env-dev
+    image: "{{devcontainer.name }}-dev"
 
     # additional mounts for container in format: `src:dst`, for example this
     # will mount home folder to /mnt/home in the container

@@ -5,5 +5,5 @@
 
 {% for command in cookiecutter.docker.additional_commands -%}
 {{ command }}
-{%- endfor -%}
+{% endfor -%}
 {%- endif -%}
