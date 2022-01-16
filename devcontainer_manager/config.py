@@ -90,7 +90,7 @@ class Config(WritableNamespace):
         return d
 
     def as_yaml(self) -> str:
-        return yaml.dump(self.as_dict())
+        return yaml.dump(self.as_dict(), default_flow_style=False)
 
     def write_yaml(self, config_path=None):
         config_path = self._get_config_path(config_path)
@@ -120,7 +120,9 @@ class Config(WritableNamespace):
         values["project_root_basename"] = project_name
 
         config_dict = yaml.safe_load(
-            render_recursive_template(yaml.dump(self.as_dict()), values)
+            render_recursive_template(
+                yaml.dump(self.as_dict(), default_flow_style=False), values
+            )
         )
         config = DevcontainerConfig(config_dict)
         config = default_config().merge(config)
@@ -244,4 +246,4 @@ class OverrideConfig(DevcontainerConfig):
     def as_yaml(self) -> str:
         d = super().as_dict().copy()
         d.pop("config_base")
-        return yaml.dump(d)
+        return yaml.dump(d, default_flow_style=False)
