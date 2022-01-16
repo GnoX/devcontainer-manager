@@ -1,12 +1,11 @@
 import os
-import shutil
 from pathlib import Path
 
 import oyaml as yaml
 import pytest
 from typer.testing import CliRunner
 
-from devcontainer_manager.cli import app
+from devcontainer_manager.cli.cli import app
 from devcontainer_manager.config import DEFAULT_CONFIG_PATH, OVERRIDE_CONFIG
 from devcontainer_manager.global_config import (
     DEFAULT_GLOBAL_CONFIG_PATH,
@@ -31,21 +30,16 @@ def default_config_yaml(default_config_dict):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def global_config_path():
-    data_path = Path("tests/data")
+def global_config_path(tmp_path):
+    data_path = tmp_path / "global"
     data_path.mkdir(exist_ok=True, parents=True)
     os.environ[GLOBAL_CONFIG_ENV_VAR] = data_path.as_posix()
-    yield data_path / GLOBAL_CONFIG_FILENAME
-    shutil.rmtree(data_path)
+    return data_path / GLOBAL_CONFIG_FILENAME
 
 
 @pytest.fixture(scope="module")
 def default_global_config_yaml():
-    return (
-        yaml.dump(yaml.safe_load(DEFAULT_GLOBAL_CONFIG_PATH.read_text()))
-        .replace("null", "")
-        .strip()
-    )
+    return DEFAULT_GLOBAL_CONFIG_PATH.read_text().strip()
 
 
 @pytest.fixture(scope="function")
@@ -77,38 +71,40 @@ def config_dict(tmp_path):
     return config
 
 
-def test_cli_create_config_command_creates_configs(
+def test_cli_create_template_command_creates_configs(
     runner,
     config_path,
     default_config_yaml,
     global_config_path,
     default_global_config_yaml,
 ):
-    result = runner.invoke(app, ["create-config", config_path.as_posix()])
+    result = runner.invoke(app, ["create-template", config_path.as_posix()])
 
     assert result.exit_code == 0
     assert config_path.read_text() == default_config_yaml
     assert global_config_path.read_text().strip() == default_global_config_yaml
 
 
-def test_cli_create_config_command_config_already_created(config_path, runner):
+def test_cli_create_template_command_config_already_created(
+    config_path, runner
+):
     config_path.write_text("test")
 
     result = runner.invoke(
-        app, ["create-config", config_path.as_posix()], input="n\n"
+        app, ["create-template", config_path.as_posix()], input="n\n"
     )
 
     assert result.exit_code == 1
     assert config_path.read_text() == "test"
 
 
-def test_cli_create_config_command_config_force_recreate(
+def test_cli_create_template_command_config_force_recreate(
     config_path, runner, default_config_yaml
 ):
     config_path.write_text("test")
 
     result = runner.invoke(
-        app, ["create-config", config_path.as_posix()], input="y\n"
+        app, ["create-template", config_path.as_posix()], input="y\n"
     )
 
     assert result.exit_code == 0

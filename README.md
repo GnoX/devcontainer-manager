@@ -133,6 +133,13 @@ contains following options:
 #       - mhutchie.git-graph
 global_defaults:
 
+# directory for global templates
+template_dir: "./templates"
+
+# aliases for main templates, can be added using, see
+# `devcontainer_manager alias --help`
+aliases:
+
 ```
 
 ### Per Project Template Overrides

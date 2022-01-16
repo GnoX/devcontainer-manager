@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- alias commands for templates
+  - `alias add example config.yaml` - adds alias example
+    for `config.yaml` file, this can then be used with with generate command -
+    `generate example`
+  - `alias list` - lists added examples
+  - `alias remove example` - removes alias `example` if it exists
+- if `generate` command is ran without arguments, script generates template using
+  `.devcontainer/overrides.yaml` config if it exists
+### Changed
+- `create-config` renamed to `create-template` and added global template
+  functionality - if extension is not specified, global template is created
+  in folder specified by global config `template_dir` and alias is created
+
+
 
 ## [0.3.0] - 2021-01-16
 ### Added
