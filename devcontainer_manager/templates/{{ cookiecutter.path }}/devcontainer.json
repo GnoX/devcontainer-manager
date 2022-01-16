@@ -5,7 +5,7 @@
     {%- if cookiecutter.devcontainer.mounts|length > 0 %}
     "mounts": [
         {%- for mount in cookiecutter.devcontainer.mounts %}
-        {{ mount }}
+        "{{ mount }}"
         {%- if not loop.last -%}
         ,
         {%- endif %}
@@ -35,7 +35,7 @@
         {%- endif %}
         {%- endfor %}
     ],
-    {% endif %}
+    {%- endif %}
     {%- if cookiecutter.devcontainer.shutdown_action is not none %}
     "shutdownAction": "{{ cookiecutter.devcontainer.shutdown_action }}"
     {%- endif %}

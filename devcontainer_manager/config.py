@@ -132,6 +132,9 @@ class Config(WritableNamespace):
         config.devcontainer.workspace_mount = resolve_mount_string(
             config.devcontainer.workspace_mount
         )
+        config.devcontainer.mounts = [
+            resolve_mount_string(mount) for mount in config.devcontainer.mounts
+        ]
         return config
 
     def override(self, args: List[str]):
