@@ -6,9 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] 2021-01-16
+### Changed
+- disabled default flow style dumping for older yaml versions
+## [0.4.2] 2021-01-16
+### Fixed
+- included missing default configs in package
+
 ## [0.4.1] 2021-01-16
 ### Fixed
-- include subpackages in setup
+- included subpackages in setup
 ## [0.4.0] 2021-01-16
 ### Added
 - alias commands for templates
