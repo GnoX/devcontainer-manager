@@ -1,1 +1,8 @@
+# overrides for defaults in the same form as template configs, for example
+# adding git-graph extension to all templates
+#
+# global_defaults:
+#   devcontainer:
+#     extensions:
+#       - mhutchie.git-graph
 global_defaults:
