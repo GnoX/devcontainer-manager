@@ -18,8 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `create-config` renamed to `create-template` and added global template
   functionality - if extension is not specified, global template is created
   in folder specified by global config `template_dir` and alias is created
-
-
+- default for image name is now `{{ devcontainer.name }}-dev`
 
 ## [0.3.0] - 2021-01-16
 ### Added

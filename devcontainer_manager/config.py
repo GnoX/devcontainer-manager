@@ -50,7 +50,8 @@ def dict_merge(d, overwrite):
             orig_list = d[k] if k in d and d[k] else list()
             new_config[k] = list(set(orig_list + v))
         else:
-            new_config[k] = v
+            if v is not None:
+                new_config[k] = v
 
     return new_config
 
@@ -236,7 +237,9 @@ class OverrideConfig(DevcontainerConfig):
         return super().__getattribute__(name)
 
     def as_dict(self):
-        return super().as_dict()["config_base"].as_dict()
+        d = super().as_dict()
+        d.pop("config_base")
+        return dict_merge(self.config_base.as_dict(), d)
 
     def as_yaml(self) -> str:
         d = super().as_dict().copy()
