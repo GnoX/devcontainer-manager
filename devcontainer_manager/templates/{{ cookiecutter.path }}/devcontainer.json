@@ -2,31 +2,50 @@
     "name": "{{ cookiecutter.devcontainer.name }}",
     "workspaceMount": "{{ cookiecutter.devcontainer.workspace_mount }}",
     "workspaceFolder": "{{ cookiecutter.devcontainer.workspace_folder }}",
+    {%- if cookiecutter.devcontainer.mounts|length > 0 %}
     "mounts": [
         {%- for mount in cookiecutter.devcontainer.mounts %}
         {{ mount }}
+        {%- if not loop.last -%}
+        ,
+        {%- endif %}
         {%- endfor %}
     ],
+    {%- endif %}
     "image": "{{ cookiecutter.devcontainer.image }}",
     {%- if cookiecutter.devcontainer.user_env_probe is not none %}
     "userEnvProbe": "{{ cookiecutter.devcontainer.user_env_probe }}",
     {%- endif %}
     "runArgs": [
         "--name", "{{ cookiecutter.devcontainer.container_name }}",
-        "--hostname", "{{ cookiecutter.devcontainer.container_hostname }}",
-        {%- for arg in cookiecutter.devcontainer.run_args %}
+        "--hostname", "{{ cookiecutter.devcontainer.container_hostname }}"
+        {%- for arg in cookiecutter.devcontainer.run_args -%}
+        {%- if loop.first %}
+        ,
+        {%- endif %}
         "{{ arg }}",
         {%- endfor %}
     ],
+    {%- if cookiecutter.devcontainer.extensions|length > 0 %}
     "extensions": [
         {%- for extension in cookiecutter.devcontainer.extensions %}
-        "{{ extension }}",
+        "{{ extension }}"
+        {%- if not loop.last -%}
+        ,
+        {%- endif %}
         {%- endfor %}
     ],
+    {% endif %}
     {%- if cookiecutter.devcontainer.shutdown_action is not none %}
-    "shutdownAction": "{{ cookiecutter.devcontainer.shutdown_action }}",
+    "shutdownAction": "{{ cookiecutter.devcontainer.shutdown_action }}"
     {%- endif %}
     {%- for option in cookiecutter.devcontainer.additional_options_json %}
-    {{ option }},
+    {%- if loop.first -%}
+    ,
+    {%- endif %}
+    {{ option }}
+    {%- if not loop.last -%}
+    ,
+    {%- endif %}
     {%- endfor %}
 }
