@@ -130,7 +130,7 @@ dmypy.json
 
 # VSCode config
 .devcontainer/
-.settings/
+.vscode
 
 # Generated files
 devcontainer_manager/templates/cookiecutter.json

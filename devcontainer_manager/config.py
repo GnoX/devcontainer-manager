@@ -44,10 +44,10 @@ def dict_merge(d, overwrite):
 
     for k, v in overwrite.items():
         if isinstance(v, dict):
-            orig_dict = d[k] if k in d else dict()
+            orig_dict = d[k] if k in d and d[k] else dict()
             new_config[k] = dict_merge(orig_dict, v)
         elif isinstance(v, list):
-            orig_list = d[k] if k in d else list()
+            orig_list = d[k] if k in d and d[k] else list()
             new_config[k] = list(set(orig_list + v))
         else:
             new_config[k] = v
@@ -100,7 +100,15 @@ class Config(WritableNamespace):
         return self._get_config_path().exists()
 
     def merge(self, other: "Config"):
-        return type(self)(dict_merge(self.as_dict(), other.as_dict()))
+        return type(self)(
+            dict_merge(self.as_dict(), other.as_dict()), self.config_path
+        )
+
+    @property
+    def absolute_config_path(self):
+        return (
+            Path(self.config_path).absolute() if self.config_path else Path()
+        )
 
     def render(self):
         project_name = get_project_root_basename().strip()
