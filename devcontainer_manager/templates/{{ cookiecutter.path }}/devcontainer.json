@@ -20,7 +20,7 @@
         "--name", "{{ cookiecutter.devcontainer.container_name }}",
         "--hostname", "{{ cookiecutter.devcontainer.container_hostname }}"
         {%- for arg in cookiecutter.devcontainer.run_args -%}
-        {%- if loop.first %}
+        {%- if loop.first -%}
         ,
         {%- endif %}
         "{{ arg }}",

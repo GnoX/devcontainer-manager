@@ -1,9 +1,10 @@
 import copy
+import io
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-import oyaml as yaml
+from ruamel.yaml import YAML
 
 from .exceptions import (
     ConfigMovedException,
@@ -11,6 +12,10 @@ from .exceptions import (
     InvalidMountStringException,
 )
 from .util import get_project_root_basename, render_recursive_template
+
+yaml = YAML()
+yaml.default_flow_style = False
+yaml.indent(mapping=4, sequence=4, offset=2)
 
 OVERRIDE_CONFIG = "overrides.yaml"
 
@@ -86,11 +91,14 @@ class Config(WritableNamespace):
 
     def as_dict(self):
         d = self.__dict__.copy()
-        d.pop("config_path")
+        if "config_path" in d:
+            d.pop("config_path")
         return d
 
     def as_yaml(self) -> str:
-        return yaml.dump(self.as_dict(), default_flow_style=False)
+        buf = io.StringIO()
+        yaml.dump(self.as_dict(), buf)
+        return buf.getvalue()
 
     def write_yaml(self, config_path=None):
         config_path = self._get_config_path(config_path)
@@ -119,10 +127,10 @@ class Config(WritableNamespace):
         values = copy.deepcopy(self.as_dict())
         values["project_root_basename"] = project_name
 
-        config_dict = yaml.safe_load(
-            render_recursive_template(
-                yaml.dump(self.as_dict(), default_flow_style=False), values
-            )
+        buf = io.StringIO()
+        yaml.dump(self.as_dict(), buf)
+        config_dict = yaml.load(
+            render_recursive_template(buf.getvalue(), values)
         )
         config = DevcontainerConfig(config_dict)
         config = default_config().merge(config)
@@ -196,7 +204,7 @@ class Config(WritableNamespace):
         override = Path(override_path).resolve().as_posix()
 
         if file_path.exists() and file_path.is_file():
-            config_dict = yaml.safe_load(file_path.read_text())
+            config_dict = yaml.load(file_path.read_text())
             if "base_config" in config_dict:
                 return OverrideConfig(config_dict, override)
 
@@ -225,7 +233,7 @@ class OverrideConfig(DevcontainerConfig):
 
         super().__init__(config, path)
         self.config_base = DevcontainerConfig(
-            yaml.safe_load(base_config_path.read_text())
+            yaml.load(base_config_path.read_text())
         )
 
     def __getattribute__(self, name: str) -> Any:
@@ -240,10 +248,13 @@ class OverrideConfig(DevcontainerConfig):
 
     def as_dict(self):
         d = super().as_dict()
-        d.pop("config_base")
+        if "config_base" in d:
+            d.pop("config_base")
         return dict_merge(self.config_base.as_dict(), d)
 
     def as_yaml(self) -> str:
         d = super().as_dict().copy()
         d.pop("config_base")
-        return yaml.dump(d, default_flow_style=False)
+        buf = io.StringIO()
+        yaml.dump(d, buf)
+        return buf.getvalue()

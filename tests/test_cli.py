@@ -1,12 +1,16 @@
+import io
 import os
 from pathlib import Path
 
-import oyaml as yaml
 import pytest
 from typer.testing import CliRunner
 
 from devcontainer_manager.cli.cli import app
-from devcontainer_manager.config import DEFAULT_CONFIG_PATH, OVERRIDE_CONFIG
+from devcontainer_manager.config import (
+    DEFAULT_CONFIG_PATH,
+    OVERRIDE_CONFIG,
+    yaml,
+)
 from devcontainer_manager.global_config import (
     DEFAULT_GLOBAL_CONFIG_PATH,
     GLOBAL_CONFIG_ENV_VAR,
@@ -21,12 +25,14 @@ def runner():
 
 @pytest.fixture(scope="module")
 def default_config_dict():
-    return yaml.safe_load(DEFAULT_CONFIG_PATH.read_text())
+    return yaml.load(DEFAULT_CONFIG_PATH.read_text())
 
 
 @pytest.fixture(scope="module")
 def default_config_yaml(default_config_dict):
-    return yaml.dump(default_config_dict)
+    buf = io.StringIO()
+    yaml.dump(default_config_dict, buf)
+    return buf.getvalue()
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -112,7 +118,9 @@ def test_cli_create_template_command_config_force_recreate(
 
 
 def test_cli_generate_command(runner, config_path, config_dict):
-    config_path.write_text(yaml.dump(config_dict))
+    buf = io.StringIO()
+    yaml.dump(config_dict, buf)
+    config_path.write_text(buf.getvalue())
     devcontainer_path = Path(config_dict["path"])
 
     result = runner.invoke(app, ["generate", config_path.as_posix()])
