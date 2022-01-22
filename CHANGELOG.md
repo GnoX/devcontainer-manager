@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - switched PyYAML to ruamel.yaml - yaml comments in configs will now be preserved
 
+### Fixed
+- fixed config list items being deduplicated and shuffled
+
 ## [0.4.3] 2021-01-16
 ### Changed
 - disabled default flow style dumping for older yaml versions

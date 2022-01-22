@@ -53,7 +53,7 @@ def dict_merge(d, overwrite):
             new_config[k] = dict_merge(orig_dict, v)
         elif isinstance(v, list):
             orig_list = d[k] if k in d and d[k] else list()
-            new_config[k] = list(set(orig_list + v))
+            new_config[k] = orig_list + v
         else:
             if v is not None:
                 new_config[k] = v
@@ -135,6 +135,10 @@ class Config(WritableNamespace):
         config = DevcontainerConfig(config_dict)
         config = default_config().merge(config)
 
+        config.devcontainer.extensions = list(
+            dict.fromkeys(config.devcontainer.extensions)
+        )
+
         if config.docker.file:
             dockerfile_path = Path(config.docker.file)
             if dockerfile_path.exists():
@@ -146,6 +150,9 @@ class Config(WritableNamespace):
         config.devcontainer.mounts = [
             resolve_mount_string(mount) for mount in config.devcontainer.mounts
         ]
+        config.devcontainer.mounts = list(
+            dict.fromkeys(config.devcontainer.mounts)
+        )
         return config
 
     def override(self, args: List[str]):
