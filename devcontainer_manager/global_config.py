@@ -2,9 +2,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-import oyaml as yaml
-
-from .config import Config, DevcontainerConfig
+from .config import Config, DevcontainerConfig, yaml
 
 GLOBAL_CONFIG_ENV_VAR = "DEVCONTAINER_MANAGER_DIR"
 
@@ -19,7 +17,7 @@ DEFAULT_GLOBAL_CONFIG_PATH = (
 
 def get_default_global_config(path: str = None):
     return GlobalConfig(
-        yaml.safe_load(DEFAULT_GLOBAL_CONFIG_PATH.read_text()), path
+        yaml.load(DEFAULT_GLOBAL_CONFIG_PATH.read_text()), path
     )
 
 
@@ -68,6 +66,6 @@ class GlobalConfig(Config):
             config_path.write_text(global_config_content)
         default_config = get_default_global_config(config_path.as_posix())
         global_config = GlobalConfig(
-            yaml.safe_load(global_config_content), config_path.as_posix()
+            yaml.load(global_config_content), config_path.as_posix()
         )
         return default_config.merge(global_config)
