@@ -22,12 +22,20 @@ all available commands.
 
 First step is to create default master configuration with
 ```shell
-devcontainer_manager create-config <config-path>
+devcontainer_manager create-template <config-path>
 ```
-This creates yaml file with all available options set do default. You can then
+This creates yaml file with all available options set to default. You can then
 open the file and change the options in editor.
 
-NOTE: There is currently no way to set the parameters from the command line.
+If you specify `config-path` without `.yaml` suffix then it is considered
+global template.  Global templates are saved to
+`~/.devcontainer_manager/templates/<config-path>.yaml` and alias is created.
+This can then be used in generate directly as `config-path`, for example:
+```
+devcontainer_manager create-template python
+# modify ~/.devcontainer_manager/templates/python.yaml
+devcontainer_manager generate python
+```
 
 The following code displays all of the options and defaults
 [//]: # (template_config_block_start)
@@ -121,12 +129,18 @@ options as displayed in `container_name` and `container_hostname`.
 ### Devconfig Generation
 To generate the configuration
 ```shell
-devcontainer_manager generate <config-path>
+devcontainer_manager generate [config-paths]
 ```
 
 Using default config, this would generate `devcontainer.json` and `overrides.yaml`
 (more in the [Project Overrides](#per-project-template-overrides) section) files
 (as docker.path is null by default).
+
+If you specify more configs, then they are merged from left to right.
+
+If config-paths is not specified then `.devcontainer/overrides.yaml` is used for
+generation if it exists.
+
 
 ### Global Configuration
 Global configuration can be found in `~/.devcontainer_manager/config.yaml` and
@@ -147,26 +161,10 @@ override_config_path: overrides.yaml
 [//]: # (global_config_block_end)
 
 ### Per Project Template Overrides
-Note that `generate` command does have optional arguments that take form of
-`key.subkey=value`, for example you always want to override the container name
-```shell
-devcontainer_manager generate /templates/python.yaml devcontainer.name=project_name
-```
-
-OR you can manually edit `.devcontainer/overrides.yaml`.
+To edit overrides, you can manually edit generated `.devcontainer/overrides.yaml`.
 
 Once the overrides exist, you can then call each subsequent generation using
 ```sh
-devcontainer_manager generate .devcontainer/overrides.yaml
+devcontainer_manager generate
 ```
 This is also useful for easy generation when the master template changes.
-
-
-`overrides.yaml` config contains `base_config` key that specifies absolute
-path to template config, so if this file is moved, re-generation will fail.
-
-## TODOS and Ideas
-- automatic indexing of all overrides of master template
-- templates from repositories, snippets or web pages
-- better documentation and examples
-- tests and CI

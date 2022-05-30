@@ -60,6 +60,7 @@ def generate(templates: Optional[List[str]] = typer.Argument(None)):
 def create_template(
     template_path: str = typer.Argument(...),
     force: bool = typer.Option(False, "--force", "-f"),
+    with_descriptions: bool = typer.Option(True, "-d/-D", "--with-description/--no-description"),
 ):
     global_config = GlobalConfig.load(create_if_not_exist=True)
 
@@ -80,7 +81,7 @@ def create_template(
         if not typer.confirm(f"Config '{path}' already exists, overwrite?"):
             raise typer.Exit(1)
 
-    Config().write_yaml(path)
+    Config().write_yaml(path, with_descriptions=with_descriptions)
 
     if global_template:
         alias_config = global_config.load_alias_config()
