@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- added message with template path after running generate with global template
+
 ## [1.1.0] - 2021-05-30
 ### Added
 - added flag `--build` to `generate` subcommand that runs docker build after

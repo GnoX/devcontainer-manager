@@ -90,6 +90,7 @@ def create_template(
             raise typer.Exit(1)
 
     Config().write_yaml(path, with_descriptions=with_descriptions)
+    typer.echo("Config written to " f"'{typer.style(path, typer.colors.GREEN)}'")
 
     if global_template:
         alias_config = global_config.load_alias_config()
