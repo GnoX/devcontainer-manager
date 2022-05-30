@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- added config key `base_config` that accepts list of other configs, these configs
+  will be merged in list order
+
+### Changed
+- completely rewriten configs to pydantic
+- global config structure was changed, to migrate, change:
+  - `global_defaults` renamed to `defaults`
+  - `aliases` moved to separate config - `aliases.yaml`
+  - added new option `override_config_path` by default `overrides.yaml`
+- config structure migration:
+  - rename `additional_options_json` to `additional_options`
+- changed `devcontainer_manager generate` arguments - now it accepts multiple configurations
+  which will be merged in order of arguments from left to right
 
 ## [0.4.4] 2021-01-22
 ### Changed

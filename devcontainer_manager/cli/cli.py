@@ -1,16 +1,16 @@
-import json
+from functools import reduce
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import typer
 from cookiecutter.main import cookiecutter
 
-from devcontainer_manager.global_config import GlobalConfig
-
-from ..config import OVERRIDE_CONFIG, Config, OverrideConfig, default_config
+from ..config import Config
+from ..global_config import GlobalConfig
 from . import alias
 
 TEMPLATE_DIR = Path(__file__).parent.parent / "templates"
+COOKIECUTTER_CONFIG = TEMPLATE_DIR / "cookiecutter.json"
 
 
 app = typer.Typer()
@@ -18,53 +18,41 @@ app.add_typer(alias.app, name="alias")
 
 
 @app.command(context_settings={"allow_extra_args": True})
-def generate(
-    ctx: typer.Context, template: Optional[str] = typer.Argument(None)
-):
-    global_config = GlobalConfig.load()
-    if template is None:
-        template_path = Path(".devcontainer") / OVERRIDE_CONFIG
+def generate(ctx: typer.Context, templates: Optional[List[str]] = typer.Argument(None)):
+    global_config = GlobalConfig.load(create_if_not_exist=True)
+    if templates is None:
+        template_path = global_config.defaults.path / global_config.override_config_path
         if not template_path.exists():
             typer.echo(
                 "Template argument not specified and "
                 "`.devcontainer/overrides.yaml` does not exist"
             )
             raise typer.Exit(1)
-        template = template_path.as_posix()
+        templates = [template_path.as_posix()]
     else:
-        template = global_config.resolve_alias(template)
+        templates = [global_config.load_alias_config().aliases.get(t, t) for t in templates]
 
-    config = Config.parse(template)
+    configs = [Config.parse_file(t).merge_bases() for t in templates]
+    merged_config = global_config.merge_bases().defaults | reduce(lambda a, b: a | b, configs)
 
-    if isinstance(config, OverrideConfig):
-        override_config = config
-    else:
-        override_config = config.override(ctx.args)
-        override_path = Path(config.path) / OVERRIDE_CONFIG
-        override_config.write_yaml(override_path)
-
-    default_merged = default_config().merge(global_config.global_defaults)
-    global_merged = default_merged.merge(override_config)
-    rendered = global_merged.render()
-
-    cookiecutter_config = TEMPLATE_DIR / "cookiecutter.json"
-    cookiecutter_config.write_text(json.dumps(rendered.as_dict(), indent=4))
-    cookiecutter(
-        TEMPLATE_DIR.as_posix(), no_input=True, overwrite_if_exists=True
+    COOKIECUTTER_CONFIG.write_text(
+        (merged_config).resolve().json(indent=4, exclude={"base_config": True})
     )
+    cookiecutter(TEMPLATE_DIR.as_posix(), no_input=True, overwrite_if_exists=True)
 
-    devcontainer_dir = Path(config.path)
-    if not config.docker.file:
+    devcontainer_dir = Path(merged_config.path)
+    if not merged_config.docker.file:
         (devcontainer_dir / "devcontainer.Dockerfile").unlink()
         (devcontainer_dir / "build.sh").unlink()
 
 
 @app.command()
 def create_template(
-    template_path: str = typer.Argument("template"),
+    template_path: str = typer.Argument(...),
     force: bool = typer.Option(False, "--force", "-f"),
 ):
-    global_config = GlobalConfig.load()
+    global_config = GlobalConfig.load(create_if_not_exist=True)
+
     path = Path(template_path)
 
     global_template = False
@@ -73,31 +61,22 @@ def create_template(
         path = path.with_suffix(".yaml")
 
     if global_template:
-        if path.is_absolute():
-            typer.echo(
-                "Error: --local not specified but path is absolute", err=True
-            )
+        if global_config.template_dir.is_absolute():
+            typer.echo("Error: --local not specified but path is absolute", err=True)
             raise typer.Exit(1)
+        path = global_config.config_path.parent / global_config.template_dir / path
 
-        path = global_config.resolve_template_dir() / path
-
-    config = default_config(path.as_posix())
-    if config.yaml_exists() and not force:
+    if path.exists() and not force:
         if not typer.confirm(f"Config '{path}' already exists, overwrite?"):
             raise typer.Exit(1)
 
-    config.write_yaml(path)
-    typer.echo(
-        "Config written to " f"'{typer.style(path, typer.colors.GREEN)}'"
-    )
+    Config().write_yaml(path)
 
     if global_template:
-        global_config.add_alias(path.stem, path.as_posix())
-        global_config.write_yaml()
-        typer.echo(
-            "Alias created: "
-            f"'{typer.style(path.stem, fg=typer.colors.BLUE)}'"
-        )
+        alias_config = global_config.load_alias_config()
+        alias_config.aliases[path.stem] = path.as_posix()
+        alias_config.write_yaml()
+        typer.echo("Alias created: " f"'{typer.style(path.stem, fg=typer.colors.BLUE)}'")
 
 
 def main():

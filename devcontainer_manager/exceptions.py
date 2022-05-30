@@ -2,6 +2,10 @@ class InvalidArgumentException(Exception):
     pass
 
 
+class ConfigDoesNotExistException(Exception):
+    pass
+
+
 class ConfigMovedException(Exception):
     pass
 

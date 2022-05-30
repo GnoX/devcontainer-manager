@@ -1,267 +1,185 @@
-import copy
-import io
-import re
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import List, Optional
 
-from ruamel.yaml import YAML
+import jinja2
+from pydantic import Field, root_validator, validator
 
-from .exceptions import (
-    ConfigMovedException,
-    InvalidArgumentException,
-    InvalidMountStringException,
-)
+from .base_config import BaseYamlConfigModel, BaseYamlConfigModelWithBase, default_if_none
+from .types import MountString
 from .util import get_project_root_basename, render_recursive_template
 
-yaml = YAML()
-yaml.default_flow_style = False
-yaml.indent(mapping=4, sequence=4, offset=2)
 
-OVERRIDE_CONFIG = "overrides.yaml"
+class DevcontainerConfig(BaseYamlConfigModel):
+    name: Optional[str] = Field("{{ project_root_basename }}", description="dev container name")
 
-DEVCONTAINER_MOUNT_STR_REGEX = re.compile(r"^src=(.+),dst=(.+)(,.+)?")
-SIMPLE_MOUNT_REGEX = re.compile(r"(?P<src>.+):(?P<dst>.+)")
-DEFAULT_CONFIG_PATH = Path(__file__).parent / "config" / "default_config.yaml"
+    workspace_folder: Optional[Path] = Field(
+        Path("/mnt/workspace"),
+        description="path in container where source will be mounted",
+    )
+
+    workspace_mount: Optional[MountString] = Field(
+        MountString("${localWorkspaceFolder}:{{ devcontainer.workspace_folder }}"),
+        description=(
+            "same as workspaceMount in devcontainer.json - path for workspace and where\n"
+            "to mount it; there are two available formats:\n"
+            "   - same as devcontainer.json\n"
+            "   - shortened form - '<local-path>:<remote-path>' - this will be translated\n"
+            "     to 'src=<local-path>,dst=<remote-path>,type=bind,consistency=cached'"
+        ),
+    )
+    shutdown_action: Optional[str] = Field(
+        "none",
+        description="same as shutdownAction in devcontainer.json",
+    )
+    user_env_probe: Optional[str] = Field(
+        "loginInteractiveShell",
+        description="same as userEnvProbe in devcontainer.json",
+    )
+    image: Optional[str] = Field(
+        "{{ devcontainer.name }}-dev",
+        description="devcontainer image to use",
+    )
+    mounts: Optional[List[str]] = Field(
+        default_factory=list,
+        description=(
+            "additional mounts for container in format: `src:dst`, for example this\n"
+            "will mount home folder to /mnt/home in the container\n"
+            "mounts:\n"
+            "   - /home/developer:/mnt/home"
+        ),
+    )
+    container_name: Optional[str] = Field(
+        "{{ devcontainer.name }}",
+        description=(
+            "name of the container - this will be passed as `--name <arg>` in `docker run`"
+        ),
+    )
+    container_hostname: Optional[str] = Field(
+        "{{ devcontainer.name }}",
+        description=(
+            "container hostname - this will be passed as `--hostname <arg>` in `docker run`\n"
+            "this option is to make shell display the hostname as specified name instead\n"
+            "of randomly generated container hex code"
+        ),
+    )
+    run_args: Optional[List[str]] = Field(
+        default_factory=list,
+        description=(
+            "aditional arguments that will be passed to `docker run` - i.e. adding gpus:\n"
+            "run_args:\n"
+            "- gpus=all"
+        ),
+    )
+
+    extensions: Optional[List[str]] = Field(
+        default_factory=list,
+        description=(
+            "default extensions to install - will be directly translated to devcontainer.json\n"
+            "extensions"
+        ),
+    )
+    additional_options: Optional[List[str]] = Field(
+        default_factory=list,
+        description="list of additional options to that will be appended to devcontainer config",
+    )
+
+    _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
 
 
-def default_config(path: str = None):
-    return Config.parse(DEFAULT_CONFIG_PATH.as_posix(), path)
+class DockerConfig(BaseYamlConfigModel):
+    file: Optional[Path] = Field(
+        None,
+        description=(
+            "path for base dockerfile to use for building custom image\n"
+            "null means that the dockerfile will not be generated\n"
+            "if the path is valid, two files will be generated - devcontainer.Dockerfile\n"
+            "and build.sh script for building this dockerfile"
+        ),
+    )
+
+    additional_commands: Optional[List[str]] = Field(
+        default_factory=list,
+        description=(
+            "additional lines to append to dockerfile - this is useful if the main dockerfile\n"
+            "does not contain developer tools, for example to add fish and git:\n"
+            "\n"
+            "additional_commands:\n"
+            "- >\n"
+            "  RUN apt-get update && apt-get install\n"
+            "     fish procps git git-lfs\n"
+            "  && rm -rf /var/lib/apt/lists/*\n"
+            '- ENV SHELL="/usr/bin/fish"\n'
+            "- ENV LANG=C.UTF-8 LANGUAGE=C.UTF-8 LC_ALL=C.UTF-8\n"
+            '- SHELL ["fish", "--command"]\n'
+            '- ENTRYPOINT ["fish"]'
+        ),
+    )
+
+    _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
 
 
-def resolve_mount_string(mnt_str: str):
-    match = SIMPLE_MOUNT_REGEX.match(mnt_str)
-    if match is not None:
-        return (
-            f"src={match.group('src')},"
-            f"dst={match.group('dst')},"
-            "type=bind,consistency=cached"
+class Config(BaseYamlConfigModelWithBase):
+    path: Path = Field(
+        Path(".devcontainer"),
+        description="custom path for devcontainer settings",
+    )
+    devcontainer: Optional[DevcontainerConfig] = DevcontainerConfig()
+    docker: Optional[DockerConfig] = DockerConfig()
+
+    _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
+
+    def resolve(self) -> "Config":
+        values = self.dict()
+        values["project_root_basename"] = get_project_root_basename()
+
+        cfg_copy = self.copy(deep=True)
+        cfg_copy.devcontainer.workspace_mount = (
+            self.devcontainer.workspace_mount.to_devcontainer_format()
         )
 
-    match = DEVCONTAINER_MOUNT_STR_REGEX.match(mnt_str)
-    if match is not None:
-        return mnt_str
+        rendered_template = render_recursive_template(cfg_copy.json(), values)
+        new_config = Config.parse_raw(rendered_template)
+        return ResolvedConfig.parse_obj(new_config.dict())
 
-    raise InvalidMountStringException(mnt_str)
-
-
-def dict_merge(d, overwrite):
-    new_config = copy.deepcopy(d)
-
-    for k, v in overwrite.items():
-        if isinstance(v, dict):
-            orig_dict = d[k] if k in d and d[k] else dict()
-            new_config[k] = dict_merge(orig_dict, v)
-        elif isinstance(v, list):
-            orig_list = d[k] if k in d and d[k] else list()
-            new_config[k] = orig_list + v
-        else:
-            if v is not None:
-                new_config[k] = v
-
-    return new_config
-
-
-class WritableNamespace:
-    def __init__(self, d):
-        self.__dict__ = d if d is not None else {}
-
-    def __getattr__(self, name: str) -> Any:
-        return WritableNamespace(None)
-
-    def __bool__(self):
-        return bool(self.__dict__)
-
-    def __repr__(self) -> str:
-        attr_str = ", ".join([f"{k}='{v}'" for k, v in self.__dict__.items()])
-        return f"{self.__class__.__name__}({attr_str})"
-
-    def __eq__(self, o: object) -> bool:
-        if o is None and not self.__dict__:
-            return True
-
-        return super().__eq__(o)
-
-
-class Config(WritableNamespace):
-    def __init__(self, config: dict, path=None):
-        super().__init__(config)
-        if isinstance(path, Path):
-            path = str(path)
-        self.config_path = path
-
-    def as_dict(self):
-        d = self.__dict__.copy()
-        if "config_path" in d:
-            d.pop("config_path")
-        return d
-
-    def as_yaml(self) -> str:
-        buf = io.StringIO()
-        yaml.dump(self.as_dict(), buf)
-        return buf.getvalue()
-
-    def write_yaml(self, config_path=None):
-        config_path = self._get_config_path(config_path)
-        config_path.parent.mkdir(exist_ok=True, parents=True)
-        config_path.write_text(self.as_yaml())
-
-    def yaml_exists(self):
-        return self._get_config_path().exists()
-
-    def merge(self, other: "Config"):
-        return type(self)(
-            dict_merge(self.as_dict(), other.as_dict()), self.config_path
-        )
-
-    @property
-    def absolute_config_path(self):
-        return (
-            Path(self.config_path).absolute() if self.config_path else Path()
-        )
-
-    def render(self):
-        project_name = get_project_root_basename().strip()
-        if project_name is None:
-            project_name = "dev-env"
-
-        values = copy.deepcopy(self.as_dict())
-        values["project_root_basename"] = project_name
-
-        buf = io.StringIO()
-        yaml.dump(self.as_dict(), buf)
-        config_dict = yaml.load(
-            render_recursive_template(buf.getvalue(), values)
-        )
-        config = DevcontainerConfig(config_dict)
-        config = default_config().merge(config)
-
-        config.devcontainer.extensions = list(
-            dict.fromkeys(config.devcontainer.extensions)
-        )
-
-        if config.docker.file:
-            dockerfile_path = Path(config.docker.file)
-            if dockerfile_path.exists():
-                config.docker.file = dockerfile_path.read_text()
-
-        config.devcontainer.workspace_mount = resolve_mount_string(
-            config.devcontainer.workspace_mount
-        )
-        config.devcontainer.mounts = [
-            resolve_mount_string(mount) for mount in config.devcontainer.mounts
-        ]
-        config.devcontainer.mounts = list(
-            dict.fromkeys(config.devcontainer.mounts)
-        )
-        return config
-
-    def override(self, args: List[str]):
-        overrides: Dict[str, Any] = dict()
-        config = dict(self.__dict__)
-
-        for arg in args:
-            current_level = config
-            current_overrides = overrides
-
-            parts = arg.split("=")
-            if len(parts) != 2:
-                raise InvalidArgumentException(f"Invalid parameter {arg}")
-
-            name, value = parts
-            name_parts = name.split(".")
-
-            for part in name_parts:
-                if part not in current_level:
-                    raise InvalidArgumentException(f"Invalid parameter {arg}")
-
-                last_overrides = current_overrides
-                if part not in current_overrides:
-                    current_overrides[part] = {}
-                current_overrides = current_overrides[part]
-                current_level = current_level[part]
-            if value.startswith("[") and value.endswith("]"):
-                last_overrides[part] = [
-                    v.strip() for v in value[1:-1].split(",")
-                ]
+    def _resolve_defaults(self, values: dict, parent_keys=None):
+        parent_keys = [] if parent_keys is None else parent_keys
+        for key, value in values.items():
+            if isinstance(value, dict):
+                self._resolve_defaults(value, parent_keys + [key])
             else:
-                last_overrides[part] = value
+                mapped_key = jinja2.Template(values[key]).render(
+                    default=".".join(["default"] + parent_keys + [key])
+                )
+                values[key] = f"{{{{ {mapped_key} }}}}"
 
-        overrides["base_config"] = self.config_path
-        return OverrideConfig(overrides)
-
-    def _get_config_path(self, config_path=None):
-        if config_path is None:
-            config_path = self.config_path
-
-        if config_path is None:
-            return RuntimeError("Config path is empty")
-
-        config_path = Path(config_path)
-        if config_path.is_dir():
-            return RuntimeError(
-                f"Config path must be file but is dir: '{config_path}'"
-            )
-        return config_path
-
-    @staticmethod
-    def parse(path: str, override_path: str = None):
-        file_path = Path(path)
-        if override_path is None:
-            override_path = file_path.as_posix()
-        override = Path(override_path).resolve().as_posix()
-
-        if file_path.exists() and file_path.is_file():
-            config_dict = yaml.load(file_path.read_text())
-            if "base_config" in config_dict:
-                return OverrideConfig(config_dict, override)
-
-            return DevcontainerConfig(config_dict, override)
-
-
-class DevcontainerConfig(Config):
-    def __init__(self, config: dict, path: Union[str, Path] = None):
-        super().__init__(config, path)
-
-    def __getattribute__(self, name: str) -> Any:
-        if name in ["devcontainer", "docker"]:
-            d = self.__dict__[name] if name in self.__dict__ else None
-            return WritableNamespace(d)
-
-        return super().__getattribute__(name)
-
-
-class OverrideConfig(DevcontainerConfig):
-    def __init__(self, config: dict, path: Union[str, Path] = None):
-        base_config_path = Path(config["base_config"])
-        if not base_config_path.exists():
-            raise ConfigMovedException(
-                f"Config '{base_config_path}' was deleted or moved"
-            )
-
-        super().__init__(config, path)
-        self.config_base = DevcontainerConfig(
-            yaml.load(base_config_path.read_text())
+    @classmethod
+    @property
+    def NONE(cls):
+        return Config.construct(
+            base_config=None,
+            path=None,
+            devcontainer=DevcontainerConfig.NONE,
+            docker=DockerConfig.NONE,
         )
 
-    def __getattribute__(self, name: str) -> Any:
-        if (
-            name not in ["__dict__", "config_base"]
-            and name not in self.__dict__
-            and name in self.config_base.__dict__
-        ):
-            return getattr(self.config_base, name)
 
-        return super().__getattribute__(name)
+class ResolvedConfig(Config):
+    @root_validator
+    def validate_nested(cls, values):
+        cls._validate_docker_path(values)
+        return values
 
-    def as_dict(self):
-        d = super().as_dict()
-        if "config_base" in d:
-            d.pop("config_base")
-        return dict_merge(self.config_base.as_dict(), d)
+    def _validate_docker_path(values):
+        docker: DockerConfig = values.get("docker")
+        config_path: Path = values.get("config_path").resolve().parent
+        docker_config_path = docker.file
+        if docker_config_path is None:
+            return
 
-    def as_yaml(self) -> str:
-        d = super().as_dict().copy()
-        d.pop("config_base")
-        buf = io.StringIO()
-        yaml.dump(d, buf)
-        return buf.getvalue()
+        if not docker_config_path.is_absolute():
+            docker_config_path = (config_path / docker_config_path).resolve()
+
+        if not docker_config_path.exists():
+            raise ValueError(
+                f"invalid value for 'docker.file' - path '{docker_config_path}' " "does not exist"
+            )
