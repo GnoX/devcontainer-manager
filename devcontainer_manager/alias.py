@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 from pydantic import Field, validator
 
@@ -9,7 +9,7 @@ DEFAULT_ALIAS_FILENAME = "aliases.yaml"
 
 
 class AliasConfig(BaseYamlConfigModel):
-    aliases: Optional[dict[str, Path]] = Field(
+    aliases: Optional[Dict[str, Path]] = Field(
         default_factory=dict,
         description=(
             "aliases for templates, can be added using,\n" "`devcontainer_manager alias --help`"
