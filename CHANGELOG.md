@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - added flag `--build` to `generate` subcommand that runs docker build after
   config generation
+- added `--version` flag that prints version
 
 ## [1.0.0] - 2021-05-30
 ### Added

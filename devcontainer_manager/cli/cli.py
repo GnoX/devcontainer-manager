@@ -6,6 +6,7 @@ from typing import List, Optional
 import typer
 from cookiecutter.main import cookiecutter
 
+from .. import __version__
 from ..config import Config
 from ..global_config import GlobalConfig
 from . import alias
@@ -95,6 +96,18 @@ def create_template(
         alias_config.aliases[path.stem] = path.as_posix()
         alias_config.write_yaml()
         typer.echo("Alias created: " f"'{typer.style(path.stem, fg=typer.colors.BLUE)}'")
+
+
+@app.command()
+def version():
+    typer.echo(__version__)
+
+
+@app.callback(invoke_without_command=True)
+def _main(version: bool = False):
+    if version:
+        typer.echo(__version__)
+        raise typer.Exit(0)
 
 
 def main():
