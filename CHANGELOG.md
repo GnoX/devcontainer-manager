@@ -5,10 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.1.0] - 2021-05-30
 ### Added
 - added flag `--build` to `generate` subcommand that runs docker build after
   config generation
-- added `--version` flag that prints version
+- added `--version` flag
 
 ### Fixed
 - fixed crash for python < 3.9 due to wrong type annotations
