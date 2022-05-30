@@ -1,3 +1,4 @@
+import subprocess
 from functools import reduce
 from pathlib import Path
 from typing import List, Optional
@@ -18,7 +19,10 @@ app.add_typer(alias.app, name="alias")
 
 
 @app.command()
-def generate(templates: Optional[List[str]] = typer.Argument(None)):
+def generate(
+    templates: Optional[List[str]] = typer.Argument(None),
+    build: bool = typer.Option(False, "--build", "-b"),
+):
     global_config = GlobalConfig.load(create_if_not_exist=True)
     from_override = not templates
 
@@ -54,6 +58,9 @@ def generate(templates: Optional[List[str]] = typer.Argument(None)):
     if not merged_config.docker.file:
         (devcontainer_dir / "devcontainer.Dockerfile").unlink()
         (devcontainer_dir / "build.sh").unlink()
+
+    if build:
+        subprocess.run(["bash", ".devcontainer/build.sh"], check=True)
 
 
 @app.command()
