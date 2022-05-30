@@ -17,10 +17,12 @@ app = typer.Typer()
 app.add_typer(alias.app, name="alias")
 
 
-@app.command(context_settings={"allow_extra_args": True})
-def generate(ctx: typer.Context, templates: Optional[List[str]] = typer.Argument(None)):
+@app.command()
+def generate(templates: Optional[List[str]] = typer.Argument(None)):
     global_config = GlobalConfig.load(create_if_not_exist=True)
-    if templates is None:
+    from_override = not templates
+
+    if from_override:
         template_path = global_config.defaults.path / global_config.override_config_path
         if not template_path.exists():
             typer.echo(
@@ -39,6 +41,14 @@ def generate(ctx: typer.Context, templates: Optional[List[str]] = typer.Argument
         (merged_config).resolve().json(indent=4, exclude={"base_config": True})
     )
     cookiecutter(TEMPLATE_DIR.as_posix(), no_input=True, overwrite_if_exists=True)
+
+    if not from_override:
+        config_paths = [cfg.config_path.resolve() for cfg in configs]
+        override_config = Config.NONE
+        override_config.base_config = config_paths
+        override_config.write_yaml(
+            global_config.defaults.path / global_config.override_config_path
+        )
 
     devcontainer_dir = Path(merged_config.path)
     if not merged_config.docker.file:

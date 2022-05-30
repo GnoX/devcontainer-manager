@@ -84,6 +84,11 @@ devcontainer:
     extensions: []
 
     # list of additional options to that will be appended to devcontainer config
+    # for example:
+    # additional_options:
+    #   - >
+    #     "dockerFile": "{{ docker.file }}"
+    #   - '"appPort": "8080"'
     additional_options: []
 docker:
 
