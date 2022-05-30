@@ -11,30 +11,29 @@ app = typer.Typer()
 def complete_aliases(ctx: typer.Context, args: List[str], incomplete: str):
     global_config = GlobalConfig.load()
     param_aliases = ctx.params.get("alias") or []
-    for alias, path in global_config.aliases.items():
+    for alias, path in global_config.load_alias_config().aliases.items():
         if alias.startswith(incomplete) and alias not in param_aliases:
             yield (alias, path)
 
 
 @app.command()
-def add(
-    alias: str = typer.Argument(...), config_path: str = typer.Argument(...)
-):
+def add(alias: str = typer.Argument(...), config_path: str = typer.Argument(...)):
     path = Path(config_path)
-    global_config = GlobalConfig.load()
-    global_config.aliases[alias] = path.resolve().as_posix()
-    global_config.write_yaml()
+    alias_config = GlobalConfig.load().load_alias_config()
+    alias_config.aliases[alias] = path.resolve().as_posix()
+    alias_config.write_yaml()
 
 
 @app.command()
 def remove(
     alias: List[str] = typer.Argument(..., shell_complete=complete_aliases),
 ):
-    global_config = GlobalConfig.load()
+    alias_config = GlobalConfig.load().load_alias_config()
+
     for alias_remove in alias:
-        if alias_remove in global_config.aliases:
-            global_config.aliases.pop(alias_remove)
-            global_config.write_yaml()
+        if alias_remove in alias_config.aliases:
+            alias_config.aliases.pop(alias_remove)
+            alias_config.write_yaml()
         else:
             message = (
                 f"{typer.style('Error: ', fg=typer.colors.RED)}"
@@ -50,7 +49,7 @@ def list():
     global_config = GlobalConfig.load()
     typer.echo("Available aliases:")
     aliases_msg = ""
-    for alias, path in global_config.aliases.items():
+    for alias, path in global_config.load_alias_config().aliases.items():
         file_exists = Path(path).exists()
         file_color = typer.colors.GREEN if file_exists else typer.colors.RED
         aliases_msg += (

@@ -39,7 +39,7 @@
     {%- if cookiecutter.devcontainer.shutdown_action is not none %}
     "shutdownAction": "{{ cookiecutter.devcontainer.shutdown_action }}"
     {%- endif %}
-    {%- for option in cookiecutter.devcontainer.additional_options_json %}
+    {%- for option in cookiecutter.devcontainer.additional_options %}
     {%- if loop.first -%}
     ,
     {%- endif %}

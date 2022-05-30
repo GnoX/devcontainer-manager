@@ -30,23 +30,26 @@ open the file and change the options in editor.
 NOTE: There is currently no way to set the parameters from the command line.
 
 The following code displays all of the options and defaults
+[//]: # (template_config_block_start)
 ```yaml
-# path to generate devcontainer files
-path: .devcontainer
+base_config: []
 
+# custom path for devcontainer settings
+path: .devcontainer
 devcontainer:
-    # name of the dev container
-    name: "{{ project_root_basename }}"
+
+    # dev container name
+    name: '{{ project_root_basename }}'
 
     # path in container where source will be mounted
     workspace_folder: /mnt/workspace
 
     # same as workspaceMount in devcontainer.json - path for workspace and where
     # to mount it; there are two available formats:
-    #   - same as devcontainer.json
-    #   - shortened form - '<local-path>:<remote-path>' - this will be translated
-    #     to 'src=<local-path>,dst=<remote-path>,type=bind,consistency=cached'
-    workspace_mount: ${localWorkspaceFolder}:/mnt/workspace
+    #    - same as devcontainer.json
+    #    - shortened form - '<local-path>:<remote-path>' - this will be translated
+    #      to 'src=<local-path>,dst=<remote-path>,type=bind,consistency=cached'
+    workspace_mount: ${localWorkspaceFolder}:{{ devcontainer.workspace_folder }}
 
     # same as shutdownAction in devcontainer.json
     shutdown_action: none
@@ -55,21 +58,21 @@ devcontainer:
     user_env_probe: loginInteractiveShell
 
     # devcontainer image to use
-    image: "{{devcontainer.name }}-dev"
+    image: '{{ devcontainer.name }}-dev'
 
     # additional mounts for container in format: `src:dst`, for example this
     # will mount home folder to /mnt/home in the container
     # mounts:
-    #   - /home/developer:/mnt/home
+    #    - /home/developer:/mnt/home
     mounts: []
 
     # name of the container - this will be passed as `--name <arg>` in `docker run`
-    container_name: "{{ devcontainer.name }}"
+    container_name: '{{ devcontainer.name }}'
 
     # container hostname - this will be passed as `--hostname <arg>` in `docker run`
     # this option is to make shell display the hostname as specified name instead
     # of randomly generated container hex code
-    container_hostname: "{{ devcontainer.name }}"
+    container_hostname: '{{ devcontainer.name }}'
 
     # aditional arguments that will be passed to `docker run` - i.e. adding gpus:
     # run_args:
@@ -81,9 +84,9 @@ devcontainer:
     extensions: []
 
     # list of additional options to that will be appended to devcontainer config
-    additional_options_json: []
-
+    additional_options: []
 docker:
+
     # path for base dockerfile to use for building custom image
     # null means that the dockerfile will not be generated
     # if the path is valid, two files will be generated - devcontainer.Dockerfile
@@ -103,8 +106,8 @@ docker:
     # - SHELL ["fish", "--command"]
     # - ENTRYPOINT ["fish"]
     additional_commands: []
-
 ```
+[//]: # (template_config_block_end)
 
 Note that you can use `jinja2` templates in the config itself to reference other
 options as displayed in `container_name` and `container_hostname`.
@@ -113,7 +116,7 @@ options as displayed in `container_name` and `container_hostname`.
 ### Devconfig Generation
 To generate the configuration
 ```shell
-devcontainer_manager generate <config-path> [key_overrides]
+devcontainer_manager generate <config-path>
 ```
 
 Using default config, this would generate `devcontainer.json` and `overrides.yaml`
@@ -123,24 +126,20 @@ Using default config, this would generate `devcontainer.json` and `overrides.yam
 ### Global Configuration
 Global configuration can be found in `~/.devcontainer_manager/config.yaml` and
 contains following options:
+[//]: # (global_config_block_start)
 ```yaml
-# overrides for defaults in the same form as template configs, for example
-# adding git-graph extension to all templates
-#
-# global_defaults:
-#   devcontainer:
-#     extensions:
-#       - mhutchie.git-graph
-global_defaults:
+base_config: []
+
+# default values for all configs for the current environment
+defaults: {}
 
 # directory for global templates
-template_dir: "./templates"
+template_dir: templates
 
-# aliases for main templates, can be added using, see
-# `devcontainer_manager alias --help`
-aliases:
-
+# default path for per-project override config (. is in '.devcontainer/')
+override_config_path: overrides.yaml
 ```
+[//]: # (global_config_block_end)
 
 ### Per Project Template Overrides
 Note that `generate` command does have optional arguments that take form of

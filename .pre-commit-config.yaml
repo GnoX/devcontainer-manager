@@ -1,46 +1,45 @@
 repos:
-    - repo: https://github.com/timothycrosley/isort
-      rev: 5.5.4
+    - repo: https://github.com/pycqa/isort
+      rev: 5.9.2
       hooks:
           - id: isort
-            name: Sorting imports
-            args: [--settings-path, pyproject.toml]
+            args: ["--profile", "black"]
+            name: isort (python)
+          - id: isort
+            name: isort (cython)
+            types: [cython]
+          - id: isort
+            name: isort (pyi)
+            types: [pyi]
     - repo: https://github.com/psf/black
-      rev: 19.3b0
+      rev: 22.3.0
       hooks:
           - id: black
-            name: Formatting python files with black
-            args: [--config=pyproject.toml]
-            language: python
-    - repo: https://github.com/pre-commit/mirrors-mypy
-      rev: v0.902
-      hooks:
-          - id: mypy
-            args: [--no-strict-optional, --ignore-missing-imports]
-            additional_dependencies:
-                - types-PyYAML
-                - types-Jinja2
-    - repo: https://github.com/pre-commit/pre-commit-hooks.git
-      rev: v2.3.0
+            language_version: python3
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.2.0
       hooks:
           - id: mixed-line-ending
-            name: Checking line-ending formating
+            name: line-endings formatting
           - id: trailing-whitespace
-            name: Fixing trailing whitespaces
+            name: trailing whitespaces formatting
             args: [--markdown-linebreak-ext=md]
           - id: end-of-file-fixer
-            name: Fixing EOF formating
+            name: end-of-files formatting
           - id: check-yaml
-            name: Checking config formating
-            args: [.pre-commit-config.yaml]
+            name: yaml coding style check (check-yaml)
+          - id: check-toml
+            name: toml coding style check (check-toml)
     - repo: https://github.com/pycqa/flake8
       rev: 3.9.2
       hooks:
           - id: flake8
+            name: python coding style check (flake8)
             entry: pflake8
             additional_dependencies: [pyproject-flake8]
     - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-      rev: 0.1.0
+      rev: 0.1.1
       hooks:
           - id: yamlfmt
             args: [--mapping, "4", --sequence, "6", --offset, "4", --preserve-quotes, --implicit_start]
+            name: yaml formatting (yamlfmt)
