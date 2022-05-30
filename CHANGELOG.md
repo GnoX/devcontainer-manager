@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   config generation
 - added `--version` flag that prints version
 
+### Fixed
+- fixed crash for python < 3.9 due to wrong type annotations
+- added missing required packages `pydantic` and `pydantic_yaml`
+
 ## [1.0.0] - 2021-05-30
 ### Added
 - added config key `base_config` that accepts list of other configs, these configs
