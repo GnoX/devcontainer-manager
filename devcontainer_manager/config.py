@@ -80,7 +80,14 @@ class DevcontainerConfig(BaseYamlConfigModel):
     )
     additional_options: Optional[List[str]] = Field(
         default_factory=list,
-        description="list of additional options to that will be appended to devcontainer config",
+        description=(
+            "list of additional options to that will be appended to devcontainer config\n"
+            "for example:\n"
+            "additional_options:\n"
+            "  - >\n"
+            '    "dockerFile": "{{ docker.file }}"\n'
+            '  - \'"appPort": "8080"\''
+        ),
     )
 
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
@@ -139,7 +146,8 @@ class Config(BaseYamlConfigModelWithBase):
 
         rendered_template = render_recursive_template(cfg_copy.json(), values)
         new_config = Config.parse_raw(rendered_template)
-        return ResolvedConfig.parse_obj(new_config.dict())
+        new_config.config_path = self.config_path
+        return ResolvedConfig.parse_obj(new_config.dict(exclude={"config_path": {}}))
 
     def _resolve_defaults(self, values: dict, parent_keys=None):
         parent_keys = [] if parent_keys is None else parent_keys
@@ -183,3 +191,4 @@ class ResolvedConfig(Config):
             raise ValueError(
                 f"invalid value for 'docker.file' - path '{docker_config_path}' " "does not exist"
             )
+        docker.file = Path(docker_config_path).read_text()

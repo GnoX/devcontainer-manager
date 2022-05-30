@@ -4,6 +4,8 @@ from pathlib import Path
 from devcontainer_manager.config import Config
 from devcontainer_manager.global_config import GlobalConfig
 
+PROJECT_DIR = Path(__file__).parent
+
 
 def replace_block(block_name, source, block_text):
     regex = re.compile(
@@ -29,12 +31,12 @@ def main():
     )
 
     readme = replace_block(
-        "template_config", Path("README.md").read_text(), f"```yaml\n{config_yaml}```"
+        "template_config", (PROJECT_DIR / "README.md").read_text(), f"```yaml\n{config_yaml}```"
     )
 
     readme = replace_block("global_config", readme, f"```yaml\n{global_config_yaml}```")
 
-    Path("README.md").write_text(readme)
+    (PROJECT_DIR / "README.md").write_text(readme)
 
 
 if __name__ == "__main__":
