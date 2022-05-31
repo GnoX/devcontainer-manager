@@ -38,6 +38,7 @@ devcontainer_manager generate python
 ```
 
 The following code displays all of the options and defaults
+
 [//]: # (template_config_block_start)
 ```yaml
 base_config: []
@@ -145,6 +146,7 @@ generation if it exists.
 ### Global Configuration
 Global configuration can be found in `~/.devcontainer_manager/config.yaml` and
 contains following options:
+
 [//]: # (global_config_block_start)
 ```yaml
 base_config: []
