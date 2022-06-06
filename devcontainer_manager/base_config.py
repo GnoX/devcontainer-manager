@@ -26,7 +26,7 @@ def default_if_none(cls, v, field: ModelField):
 class BaseYamlConfigModel(YamlModel):
     config_path: Path = Field(Path("."), exclude=True)
 
-    def __or__(self, other: "BaseYamlConfigModel"):
+    def __or__(self, other: "Model") -> "Model":
         return type(self).parse_obj(
             dict_merge(
                 self.dict(exclude={"config_path": {}}, exclude_defaults=True),

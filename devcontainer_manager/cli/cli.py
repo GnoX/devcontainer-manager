@@ -43,7 +43,7 @@ def generate(
     merged_config = global_config.merge_bases().defaults | reduce(lambda a, b: a | b, configs)
 
     COOKIECUTTER_CONFIG.write_text(
-        (merged_config).resolve().json(indent=4, exclude={"base_config": True})
+        merged_config.resolve().json(indent=4, exclude={"base_config": True})
     )
     cookiecutter(TEMPLATE_DIR.as_posix(), no_input=True, overwrite_if_exists=True)
 
@@ -105,7 +105,7 @@ def version():
 
 
 @app.callback(invoke_without_command=True)
-def _main(version: bool = False):
+def _main(version: bool = typer.Option(False, "--version", "-v")):
     if version:
         typer.echo(__version__)
         raise typer.Exit(0)

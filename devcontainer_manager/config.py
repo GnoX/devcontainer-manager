@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import List, Optional
 
-import jinja2
 from pydantic import Field, root_validator, validator
 
 from .base_config import BaseYamlConfigModel, BaseYamlConfigModelWithBase, default_if_none
@@ -39,7 +38,7 @@ class DevcontainerConfig(BaseYamlConfigModel):
         "{{ devcontainer.name }}-dev",
         description="devcontainer image to use",
     )
-    mounts: Optional[List[str]] = Field(
+    mounts: Optional[List[MountString]] = Field(
         default_factory=list,
         description=(
             "additional mounts for container in format: `src:dst`, for example this\n"
@@ -135,30 +134,22 @@ class Config(BaseYamlConfigModelWithBase):
 
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
 
-    def resolve(self) -> "Config":
+    def resolve(self) -> "ResolvedConfig":
         values = self.dict()
         values["project_root_basename"] = get_project_root_basename()
 
-        cfg_copy = self.copy(deep=True)
+        cfg_copy: Config = self.copy(deep=True)
         cfg_copy.devcontainer.workspace_mount = (
             self.devcontainer.workspace_mount.to_devcontainer_format()
         )
+        cfg_copy.devcontainer.mounts = [
+            mount.to_devcontainer_format() for mount in cfg_copy.devcontainer.mounts
+        ]
 
         rendered_template = render_recursive_template(cfg_copy.json(), values)
         new_config = Config.parse_raw(rendered_template)
         new_config.config_path = self.config_path
         return ResolvedConfig.parse_obj(new_config.dict(exclude={"config_path": {}}))
-
-    def _resolve_defaults(self, values: dict, parent_keys=None):
-        parent_keys = [] if parent_keys is None else parent_keys
-        for key, value in values.items():
-            if isinstance(value, dict):
-                self._resolve_defaults(value, parent_keys + [key])
-            else:
-                mapped_key = jinja2.Template(values[key]).render(
-                    default=".".join(["default"] + parent_keys + [key])
-                )
-                values[key] = f"{{{{ {mapped_key} }}}}"
 
     @classmethod
     @property
