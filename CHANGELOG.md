@@ -6,11 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.1] - 2021-05-30
+## [1.1.2] - 2022-06-06
+### Fixed
+- fixed mounts not being resolved in devcontainer.json
+
+## [1.1.1] - 2022-05-30
 ### Added
 - added message with template path after running generate with global template
 
-## [1.1.0] - 2021-05-30
+## [1.1.0] - 2022-05-30
 ### Added
 - added flag `--build` to `generate` subcommand that runs docker build after
   config generation
@@ -20,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed crash for python < 3.9 due to wrong type annotations
 - added missing required packages `pydantic` and `pydantic_yaml`
 
-## [1.0.0] - 2021-05-30
+## [1.0.0] - 2022-05-30
 ### Added
 - added config key `base_config` that accepts list of other configs, these configs
   will be merged in list order
@@ -36,24 +40,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed `devcontainer_manager generate` arguments - now it accepts multiple configurations
   which will be merged in order of arguments from left to right
 
-## [0.4.4] 2021-01-22
+## [0.4.4] 2022-01-22
 ### Changed
 - switched PyYAML to ruamel.yaml - yaml comments in configs will now be preserved
 
 ### Fixed
 - fixed config list items being deduplicated and shuffled
 
-## [0.4.3] 2021-01-16
+## [0.4.3] 2022-01-16
 ### Changed
 - disabled default flow style dumping for older yaml versions
-## [0.4.2] 2021-01-16
+## [0.4.2] 2022-01-16
 ### Fixed
 - included missing default configs in package
 
-## [0.4.1] 2021-01-16
+## [0.4.1] 2022-01-16
 ### Fixed
 - included subpackages in setup
-## [0.4.0] 2021-01-16
+## [0.4.0] 2022-01-16
 ### Added
 - alias commands for templates
   - `alias add example config.yaml` - adds alias example
@@ -69,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in folder specified by global config `template_dir` and alias is created
 - default for image name is now `{{ devcontainer.name }}-dev`
 
-## [0.3.0] - 2021-01-16
+## [0.3.0] - 2022-01-16
 ### Added
 - template variable `project_root_basename` that resolves to root folder basename
   of project git repository
@@ -78,7 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - changed default of `devcontainer.name` to `project_root_basename`
 
-## [0.2.0] - 2021-01-15
+## [0.2.0] - 2022-01-15
 ### Added
 - config options:
     - `devcontainer.workspace_mount` - same as workspaceMount in `devcontainer.json`
@@ -95,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - crash in generate if devcontainer folder does not exist
 
-## [0.1.2] - 2021-01-07
+## [0.1.2] - 2022-01-07
 ### Added
 - first release on pypi with basic config template creation, devcontainer
   generation supporting most of the container options and generation of
