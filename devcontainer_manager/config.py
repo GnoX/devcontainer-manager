@@ -152,13 +152,12 @@ class Config(BaseYamlConfigModelWithBase):
         return ResolvedConfig.parse_obj(new_config.dict(exclude={"config_path": {}}))
 
     @classmethod
-    @property
-    def NONE(cls):
+    def none(cls):
         return Config.construct(
             base_config=None,
             path=None,
-            devcontainer=DevcontainerConfig.NONE,
-            docker=DockerConfig.NONE,
+            devcontainer=DevcontainerConfig.none(),
+            docker=DockerConfig.none(),
         )
 
 
