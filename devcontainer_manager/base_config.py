@@ -60,8 +60,7 @@ class BaseYamlConfigModel(YamlModel):
         path.write_text(self.yaml(**yaml_kwargs))
 
     @classmethod
-    @property
-    def NONE(cls: Type["Model"]) -> "Model":
+    def none(cls: Type["Model"]) -> "Model":
         return cls.construct(**{field: None for field in cls.__fields__})
 
 
