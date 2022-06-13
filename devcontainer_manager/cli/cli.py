@@ -49,7 +49,7 @@ def generate(
 
     if not from_override:
         config_paths = [cfg.config_path.resolve() for cfg in configs]
-        override_config = Config.NONE
+        override_config = Config.none()
         override_config.base_config = config_paths
         override_config.write_yaml(
             global_config.defaults.path / global_config.override_config_path
