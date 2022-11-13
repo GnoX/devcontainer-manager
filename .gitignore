@@ -129,8 +129,8 @@ dmypy.json
 .pyre/
 
 # VSCode config
-.devcontainer/
-.vscode
+/.devcontainer/
+/.vscode/
 
 # Generated files
 devcontainer_manager/templates/cookiecutter.json

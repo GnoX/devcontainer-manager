@@ -1,3 +1,5 @@
+import os
+import platform
 from pathlib import Path
 from typing import List, Optional
 
@@ -124,19 +126,48 @@ class DockerConfig(BaseYamlConfigModel):
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
 
 
+class VSCodeConfig(BaseYamlConfigModel):
+    docker_host: Optional[str] = Field(
+        None, description="corresponds to vscode option 'docker.host'"
+    )
+    options: Optional[List[str]] = Field(
+        default_factory=list,
+        description=(
+            "list of options to that will be appended to vscode settings config\n"
+            "in json) for example:\n"
+            "options:\n"
+            "  - '\"python.testing.unittestEnabled: false\"'\n"
+            "  - '\"python.testing.pytestEnabled\": true'"
+        ),
+    )
+
+    _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
+
+    def should_create_config(self):
+        return self.docker_host is not None or bool(self.options)
+
+
 class Config(BaseYamlConfigModelWithBase):
-    path: Path = Field(
-        Path(".devcontainer"),
-        description="custom path for devcontainer settings",
+    project_path: Path = Field(
+        Path(),
+        description=(
+            "root path for current project relative to current working"
+            "directory or absolute path"
+        ),
     )
     devcontainer: Optional[DevcontainerConfig] = DevcontainerConfig()
+    vscode: Optional[VSCodeConfig] = VSCodeConfig()
     docker: Optional[DockerConfig] = DockerConfig()
 
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
 
     def resolve(self) -> "ResolvedConfig":
         values = self.dict()
+        # TODO(JML): take out into config and document all variables
         values["project_root_basename"] = get_project_root_basename()
+        values["uid"] = os.getuid()
+        values["login"] = os.getlogin()
+        values["hostname"] = platform.node()
 
         cfg_copy: Config = self.copy(deep=True)
         cfg_copy.devcontainer.workspace_mount = (

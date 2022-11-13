@@ -18,7 +18,7 @@ class GlobalConfig(BaseYamlConfigModelWithBase):
         description="directory for global templates",
     )
     override_config_path: Path = Field(
-        Path("overrides.yaml"),
+        Path(".devcontainer/overrides.yaml"),
         description=("default path for per-project override config (. is in '.devcontainer/')"),
     )
 

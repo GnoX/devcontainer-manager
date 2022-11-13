@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- added `vscode` config option that generates `.vscode/settings.json` with
+  specified options - for now, it completely overrides `settings.json`, so
+  use with caution
+- added variables `uid`, `login` and `hostname` that can be used in any config
+
+### Changed
+- replaced option `path` by `project_root` as now this tool generates multiple
+  folders
 
 ## [1.1.4] - 2022-06-13
 ### Fixed

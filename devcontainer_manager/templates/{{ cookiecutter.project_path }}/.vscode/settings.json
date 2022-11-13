@@ -1,0 +1,12 @@
+{
+    "docker.host": "{{ cookiecutter.vscode.docker_host }}"
+    {%- for option in cookiecutter.vscode.options %}
+    {%- if loop.first -%}
+    ,
+    {%- endif %}
+    {{ option }}
+    {%- if not loop.last -%}
+    ,
+    {%- endif %}
+    {%- endfor %}
+}
