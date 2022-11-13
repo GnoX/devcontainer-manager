@@ -28,7 +28,7 @@ def generate(
     from_override = not templates
 
     if from_override:
-        template_path = global_config.defaults.path / global_config.override_config_path
+        template_path = global_config.defaults.project_path / global_config.override_config_path
         if not template_path.exists():
             typer.echo(
                 "Template argument not specified and "
@@ -52,13 +52,18 @@ def generate(
         override_config = Config.none()
         override_config.base_config = config_paths
         override_config.write_yaml(
-            global_config.defaults.path / global_config.override_config_path
+            global_config.defaults.project_path / global_config.override_config_path
         )
 
-    devcontainer_dir = Path(merged_config.path)
+    devcontainer_dir = merged_config.project_path / ".devcontainer"
     if not merged_config.docker.file:
         (devcontainer_dir / "devcontainer.Dockerfile").unlink()
         (devcontainer_dir / "build.sh").unlink()
+
+    vscode_config_dir = merged_config.project_path / ".vscode"
+    if not merged_config.vscode.should_create_config():
+        (vscode_config_dir / "settings.json").unlink()
+        vscode_config_dir.rmdir()
 
     if build:
         subprocess.run(["bash", ".devcontainer/build.sh"], check=True)

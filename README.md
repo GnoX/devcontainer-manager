@@ -43,8 +43,8 @@ The following code displays all of the options and defaults
 ```yaml
 base_config: []
 
-# custom path for devcontainer settings
-path: .devcontainer
+# root path for current project relative to current workingdirectory or absolute path
+project_path: .
 devcontainer:
 
     # dev container name
@@ -99,6 +99,17 @@ devcontainer:
     #     "dockerFile": "{{ docker.file }}"
     #   - '"appPort": "8080"'
     additional_options: []
+vscode:
+
+    # corresponds to vscode option 'docker.host'
+    docker_host:
+
+    # list of options to that will be appended to vscode settings config
+    # in json) for example:
+    # options:
+    #   - '"python.testing.unittestEnabled: false"'
+    #   - '"python.testing.pytestEnabled": true'
+    options: []
 docker:
 
     # path for base dockerfile to use for building custom image
@@ -158,7 +169,7 @@ defaults: {}
 template_dir: templates
 
 # default path for per-project override config (. is in '.devcontainer/')
-override_config_path: overrides.yaml
+override_config_path: .devcontainer/overrides.yaml
 ```
 [//]: # (global_config_block_end)
 
