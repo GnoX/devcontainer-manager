@@ -22,7 +22,7 @@ def get_project_root_basename() -> str:
             stdout=subprocess.PIPE,
             universal_newlines=True,
         ).stdout
-        return Path(git_folder_path).name.strip()
+        return Path(git_folder_path).name.strip().lower()
     except subprocess.CalledProcessError:
         return None
 

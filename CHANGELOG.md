@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - replaced option `path` by `project_root` as now this tool generates multiple
   folders
 
+### Fixed
+- fixed crash when running container with uppercase project root folder names
+
 ## [1.1.4] - 2022-06-13
 ### Fixed
 - fixed crash for override configs
