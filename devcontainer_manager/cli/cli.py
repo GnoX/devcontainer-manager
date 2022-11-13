@@ -23,6 +23,7 @@ app.add_typer(alias.app, name="alias")
 def generate(
     templates: Optional[List[str]] = typer.Argument(None),
     build: bool = typer.Option(False, "--build", "-b"),
+    print_config: bool = typer.Option(False, "--print-config", "--print", "-p"),
 ):
     global_config = GlobalConfig.load(create_if_not_exist=True)
     from_override = not templates
@@ -41,6 +42,10 @@ def generate(
 
     configs = [Config.parse_file(t).merge_bases() for t in templates]
     merged_config = global_config.merge_bases().defaults | reduce(lambda a, b: a | b, configs)
+
+    if print_config:
+        print(merged_config.yaml())
+        raise typer.Exit()
 
     COOKIECUTTER_CONFIG.write_text(
         merged_config.resolve().json(indent=4, exclude={"base_config": True})

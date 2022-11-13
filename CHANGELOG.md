@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- added option `--print` to print the config without generation
 
 ## [1.2.0] - 2022-11-13
 ### Added
@@ -14,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added variables `uid`, `login` and `hostname` that can be used in any config
 
 ### Changed
-- replaced option `path` by `project_root` as now this tool generates multiple
+- replaced option `path` by `project_path` as now this tool generates multiple
   folders
 
 ### Fixed
