@@ -41,7 +41,6 @@ The following code displays all of the options and defaults
 
 [//]: # (template_config_block_start)
 ```yaml
-base_config: []
 
 # root path for current project relative to current working directory or
 # absolute path

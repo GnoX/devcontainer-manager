@@ -24,7 +24,7 @@ def replace_block(block_name, source, block_text):
 
 
 def main():
-    config_yaml = Config().yaml(with_descriptions=True)
+    config_yaml = Config().yaml(with_descriptions=True, exclude={"base_config": True})
     global_config_yaml = GlobalConfig().yaml(
         with_descriptions=True,
         exclude={"defaults": {k: True for k in Config.__fields__}},

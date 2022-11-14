@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.2] - 2022-11-13
+### Fixed
+- fixed crash on python <3.9 due to union operator available only from 3.9
+
+## [1.2.2] - 2022-11-14
 ### Added
 - added readme section about pre-defined config variables
 
