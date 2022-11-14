@@ -43,7 +43,8 @@ The following code displays all of the options and defaults
 ```yaml
 base_config: []
 
-# root path for current project relative to current workingdirectory or absolute path
+# root path for current project relative to current working directory or
+# absolute path
 project_path: .
 devcontainer:
 
@@ -136,6 +137,20 @@ docker:
 
 Note that you can use `jinja2` templates in the config itself to reference other
 options as displayed in `container_name` and `container_hostname`.
+
+### Pre-defined Variables
+
+There are several variables that are calculated before generation and can be used
+in your configs:
+
+[//]: # (global_variables_block_start)
+```
+{{ project_root_basename }}: root directory of current project
+{{ uid }}: id of current user
+{{ login }}: username of current user
+{{ hostname }}: hostname of current machine
+```
+[//]: # (global_variables_block_end)
 
 
 ### Devconfig Generation
