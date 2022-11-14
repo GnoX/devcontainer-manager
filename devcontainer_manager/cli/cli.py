@@ -30,10 +30,13 @@ def generate(
 
     if from_override:
         template_path = global_config.defaults.project_path / global_config.override_config_path
-        if not template_path.exists():
+        overrides_exist = template_path.exists()
+        path_color = typer.colors.GREEN if overrides_exist else typer.colors.RED
+        typer.echo(f"Reading config from {typer.style(template_path, path_color)}\n")
+        if not overrides_exist:
             typer.echo(
                 "Template argument not specified and "
-                "`.devcontainer/overrides.yaml` does not exist"
+                f"{typer.style('.devcontainer/overrides.yaml', path_color)} does not exist"
             )
             raise typer.Exit(1)
         templates = [template_path.as_posix()]
@@ -44,7 +47,7 @@ def generate(
     merged_config = global_config.merge_bases().defaults | reduce(lambda a, b: a | b, configs)
 
     if print_config:
-        print(merged_config.yaml())
+        typer.echo(merged_config.yaml())
         raise typer.Exit()
 
     COOKIECUTTER_CONFIG.write_text(
@@ -100,13 +103,13 @@ def create_template(
             raise typer.Exit(1)
 
     Config().write_yaml(path, with_descriptions=with_descriptions)
-    typer.echo("Config written to " f"'{typer.style(path, typer.colors.GREEN)}'")
+    typer.echo(f"Config written to '{typer.style(path, typer.colors.GREEN)}'")
 
     if global_template:
         alias_config = global_config.load_alias_config()
         alias_config.aliases[path.stem] = path.as_posix()
         alias_config.write_yaml()
-        typer.echo("Alias created: " f"'{typer.style(path.stem, fg=typer.colors.BLUE)}'")
+        typer.echo(f"Alias created: '{typer.style(path.stem, fg=typer.colors.BLUE)}'")
 
 
 @app.command()

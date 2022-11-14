@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from devcontainer_manager.config import Config
+from devcontainer_manager.config import Config, GlobalVariables
 from devcontainer_manager.global_config import GlobalConfig
 
 PROJECT_DIR = Path(__file__).parent
@@ -29,12 +29,17 @@ def main():
         with_descriptions=True,
         exclude={"defaults": {k: True for k in Config.__fields__}},
     )
+    global_variables = GlobalVariables()
 
     readme = replace_block(
         "template_config", (PROJECT_DIR / "README.md").read_text(), f"```yaml\n{config_yaml}```"
     )
 
     readme = replace_block("global_config", readme, f"```yaml\n{global_config_yaml}```")
+
+    readme = replace_block(
+        "global_variables", readme, f"```\n{global_variables.to_readme_string()}```"
+    )
 
     (PROJECT_DIR / "README.md").write_text(readme)
 

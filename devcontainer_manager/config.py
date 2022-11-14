@@ -3,7 +3,7 @@ import platform
 from pathlib import Path
 from typing import List, Optional
 
-from pydantic import Field, root_validator, validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from .base_config import BaseYamlConfigModel, BaseYamlConfigModelWithBase, default_if_none
 from .types import MountString
@@ -147,12 +147,28 @@ class VSCodeConfig(BaseYamlConfigModel):
         return self.docker_host is not None or bool(self.options)
 
 
+class GlobalVariables(BaseModel):
+    project_root_basename: str = Field(
+        default_factory=get_project_root_basename, description="root directory of current project"
+    )
+    uid: str = Field(default_factory=os.getuid, description="id of current user")
+    login: str = Field(default_factory=os.getlogin, description="username of current user")
+    hostname: str = Field(default_factory=platform.node, description="hostname of current machine")
+
+    def to_readme_string(self):
+        global_variables_info = []
+        for k, v in self.dict().items():
+            field = self.__fields__[k]
+            global_variables_info.append(f"{{{{ {k} }}}}: {field.field_info.description}")
+        return "\n".join(global_variables_info) + "\n"
+
+
 class Config(BaseYamlConfigModelWithBase):
     project_path: Path = Field(
         Path(),
         description=(
-            "root path for current project relative to current working"
-            "directory or absolute path"
+            "root path for current project relative to current working directory or\n"
+            "absolute path"
         ),
     )
     devcontainer: Optional[DevcontainerConfig] = DevcontainerConfig()
@@ -162,12 +178,7 @@ class Config(BaseYamlConfigModelWithBase):
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
 
     def resolve(self) -> "ResolvedConfig":
-        values = self.dict()
-        # TODO(JML): take out into config and document all variables
-        values["project_root_basename"] = get_project_root_basename()
-        values["uid"] = os.getuid()
-        values["login"] = os.getlogin()
-        values["hostname"] = platform.node()
+        values = self.dict() | GlobalVariables().dict()
 
         cfg_copy: Config = self.copy(deep=True)
         cfg_copy.devcontainer.workspace_mount = (
@@ -186,9 +197,9 @@ class Config(BaseYamlConfigModelWithBase):
     def none(cls):
         return Config.construct(
             base_config=None,
-            path=None,
             devcontainer=DevcontainerConfig.none(),
             docker=DockerConfig.none(),
+            vscode=VSCodeConfig.none(),
         )
 
 
