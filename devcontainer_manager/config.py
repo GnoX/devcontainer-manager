@@ -178,7 +178,8 @@ class Config(BaseYamlConfigModelWithBase):
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
 
     def resolve(self) -> "ResolvedConfig":
-        values = self.dict() | GlobalVariables().dict()
+        values = self.dict()
+        values.update(GlobalVariables().dict())
 
         cfg_copy: Config = self.copy(deep=True)
         cfg_copy.devcontainer.workspace_mount = (
