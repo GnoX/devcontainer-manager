@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2022-11-14
 ### Fixed
 - fixed crash on python <3.9 due to union operator available only from 3.9
 
