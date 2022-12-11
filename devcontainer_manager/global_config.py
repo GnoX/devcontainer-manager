@@ -24,7 +24,7 @@ class GlobalConfig(BaseYamlConfigModelWithBase):
 
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
 
-    def load_alias_config(self):
+    def load_alias_config(self) -> AliasConfig:
         alias_config_path = self.config_path.parent / DEFAULT_ALIAS_FILENAME
         if not alias_config_path.exists():
             AliasConfig().write_yaml(alias_config_path)
