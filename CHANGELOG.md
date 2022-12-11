@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- removed option to generate `.vscode` settings folder as it was only useful
+  for specifying `docker.host` which does not work with new devcontainer
+  versions
+
 ## [1.2.3] - 2022-11-14
 ### Fixed
 - fixed crash on python <3.9 due to union operator available only from 3.9
