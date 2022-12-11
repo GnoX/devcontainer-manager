@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2022-12-11
 ### Changed
 - changed `base_config` in composed configs to use aliases instead of full
   paths
