@@ -99,17 +99,6 @@ devcontainer:
     #     "dockerFile": "{{ docker.file }}"
     #   - '"appPort": "8080"'
     additional_options: []
-vscode:
-
-    # corresponds to vscode option 'docker.host'
-    docker_host:
-
-    # list of options to that will be appended to vscode settings config
-    # in json) for example:
-    # options:
-    #   - '"python.testing.unittestEnabled: false"'
-    #   - '"python.testing.pytestEnabled": true'
-    options: []
 docker:
 
     # path for base dockerfile to use for building custom image

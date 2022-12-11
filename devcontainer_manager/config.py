@@ -172,7 +172,7 @@ class Config(BaseYamlConfigModelWithBase):
         ),
     )
     devcontainer: Optional[DevcontainerConfig] = DevcontainerConfig()
-    vscode: Optional[VSCodeConfig] = VSCodeConfig()
+    # vscode: Optional[VSCodeConfig] = VSCodeConfig()
     docker: Optional[DockerConfig] = DockerConfig()
 
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)

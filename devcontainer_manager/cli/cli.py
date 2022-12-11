@@ -68,11 +68,6 @@ def generate(
         (devcontainer_dir / "devcontainer.Dockerfile").unlink()
         (devcontainer_dir / "build.sh").unlink()
 
-    vscode_config_dir = merged_config.project_path / ".vscode"
-    if not merged_config.vscode.should_create_config():
-        (vscode_config_dir / "settings.json").unlink()
-        vscode_config_dir.rmdir()
-
     if build:
         subprocess.run(["bash", ".devcontainer/build.sh"], check=True)
 
