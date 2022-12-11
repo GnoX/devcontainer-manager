@@ -80,10 +80,22 @@ class BaseYamlConfigModelWithBase(BaseYamlConfigModel):
         raise ValueError(f"invalid value for base_config: '{v}'")
 
     def merge_bases(self):
-        base_configs = [
-            config_path if config_path.is_absolute() else self.config_path.parent / config_path
-            for config_path in self.base_config
-        ]
+        from .global_config import GlobalConfig
+
+        alias_config = GlobalConfig.load().load_alias_config()
+
+        base_configs = []
+        for config_path in self.base_config:
+            resolved_config_path = None
+            if config_path.is_absolute():
+                resolved_config_path = config_path
+            elif alias_config.is_alias(config_path):
+                resolved_config_path = alias_config.resolve(config_path)
+            else:
+                resolved_config_path = self.config_path.parent / config_path
+
+            base_configs.append(resolved_config_path)
+
         base_configs = [
             type(self).parse_file(config_path).merge_bases() for config_path in base_configs
         ]

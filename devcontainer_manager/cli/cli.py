@@ -26,6 +26,7 @@ def generate(
     print_config: bool = typer.Option(False, "--print-config", "--print", "-p"),
 ):
     global_config = GlobalConfig.load(create_if_not_exist=True)
+    alias_config = global_config.load_alias_config()
     from_override = not templates
 
     if from_override:
@@ -41,7 +42,7 @@ def generate(
             raise typer.Exit(1)
         templates = [template_path.as_posix()]
     else:
-        templates = [global_config.load_alias_config().aliases.get(t, t) for t in templates]
+        templates = [alias_config.aliases.get(t, t) for t in templates]
 
     configs = [Config.parse_file(t).merge_bases() for t in templates]
     merged_config = global_config.merge_bases().defaults | reduce(lambda a, b: a | b, configs)
@@ -56,7 +57,7 @@ def generate(
     cookiecutter(TEMPLATE_DIR.as_posix(), no_input=True, overwrite_if_exists=True)
 
     if not from_override:
-        config_paths = [cfg.config_path.resolve() for cfg in configs]
+        config_paths = [alias_config.path_to_alias(cfg.config_path) for cfg in configs]
         override_config = Config.none()
         override_config.base_config = config_paths
         override_config.write_yaml(

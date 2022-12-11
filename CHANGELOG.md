@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- changed `base_config` in composed configs to use aliases instead of full
+  paths
+
 ### Removed
 - removed option to generate `.vscode` settings folder as it was only useful
   for specifying `docker.host` which does not work with new devcontainer
