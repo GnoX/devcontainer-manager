@@ -19,9 +19,13 @@ class AliasConfig(BaseYamlConfigModel):
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
 
     def is_alias(self, alias: str):
+        if isinstance(alias, Path):
+            alias = alias.as_posix()
         return alias in self.aliases
 
     def resolve(self, alias: str):
+        if isinstance(alias, Path):
+            alias = alias.as_posix()
         return self.aliases.get(alias, alias)
 
     def path_to_alias(self, path: Path):
