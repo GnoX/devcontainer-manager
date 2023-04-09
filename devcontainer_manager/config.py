@@ -177,7 +177,7 @@ class Config(BaseYamlConfigModelWithBase):
 
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
 
-    def resolve(self) -> "ResolvedConfig":
+    def resolve(self, config_path: Path = None) -> "ResolvedConfig":
         values = self.dict()
         values.update(GlobalVariables().dict())
 
@@ -191,7 +191,7 @@ class Config(BaseYamlConfigModelWithBase):
 
         rendered_template = render_recursive_template(cfg_copy.json(), values)
         new_config = Config.parse_raw(rendered_template)
-        new_config.config_path = self.config_path
+        new_config.config_path = config_path if config_path is not None else self.config_path
         return ResolvedConfig.parse_obj(new_config.dict(exclude={"config_path": {}}))
 
     @classmethod

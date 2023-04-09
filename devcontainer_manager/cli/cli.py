@@ -51,8 +51,9 @@ def generate(
         typer.echo(merged_config.yaml())
         raise typer.Exit()
 
+    config_path = global_config.defaults.project_path / global_config.override_config_path
     COOKIECUTTER_CONFIG.write_text(
-        merged_config.resolve().json(indent=4, exclude={"base_config": True})
+        merged_config.resolve(config_path).json(indent=4, exclude={"base_config": True})
     )
     cookiecutter(TEMPLATE_DIR.as_posix(), no_input=True, overwrite_if_exists=True)
 
@@ -60,9 +61,7 @@ def generate(
         config_paths = [alias_config.path_to_alias(cfg.config_path) for cfg in configs]
         override_config = Config.none()
         override_config.base_config = config_paths
-        override_config.write_yaml(
-            global_config.defaults.project_path / global_config.override_config_path
-        )
+        override_config.write_yaml(config_path)
 
     devcontainer_dir = merged_config.project_path / ".devcontainer"
     if not merged_config.docker.file:
