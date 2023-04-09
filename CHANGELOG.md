@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2023-04-09
 ### Fixed
 - fixed alias resolving during config generation if alias is used as base config
 - fixed docker file path validation when path is set from a template
