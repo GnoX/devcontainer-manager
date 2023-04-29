@@ -21,7 +21,9 @@ app.add_typer(alias.app, name="alias")
 
 @app.command()
 def generate(
-    templates: Optional[List[str]] = typer.Argument(None),
+    templates: Optional[List[str]] = typer.Argument(
+        None, autocompletion=alias.complete_aliases("templates")
+    ),
     build: bool = typer.Option(False, "--build", "-b"),
     print_config: bool = typer.Option(False, "--print-config", "--print", "-p"),
 ):
