@@ -8,12 +8,15 @@ from ..global_config import GlobalConfig
 app = typer.Typer()
 
 
-def complete_aliases(ctx: typer.Context, args: List[str], incomplete: str):
-    global_config = GlobalConfig.load()
-    param_aliases = ctx.params.get("alias") or []
-    for alias, path in global_config.load_alias_config().aliases.items():
-        if alias.startswith(incomplete) and alias not in param_aliases:
-            yield (alias, path)
+def complete_aliases(param_name: str = "alias"):
+    def _complete(ctx: typer.Context, args: List[str], incomplete: str):
+        global_config = GlobalConfig.load()
+        param_aliases = ctx.params.get(param_name) or []
+        for alias, path in global_config.load_alias_config().aliases.items():
+            if alias.startswith(incomplete) and alias not in param_aliases:
+                yield (alias, path.as_posix())
+
+    return _complete
 
 
 @app.command()
@@ -26,7 +29,7 @@ def add(alias: str = typer.Argument(...), config_path: str = typer.Argument(...)
 
 @app.command()
 def remove(
-    alias: List[str] = typer.Argument(..., shell_complete=complete_aliases),
+    alias: List[str] = typer.Argument(..., autocompletion=complete_aliases("alias")),
 ):
     alias_config = GlobalConfig.load().load_alias_config()
 
