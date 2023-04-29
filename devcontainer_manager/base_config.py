@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, validator
 from pydantic.fields import ModelField
 from pydantic_yaml import YamlModel
 
-from .util import dict_merge
+from .util import dict_merge, render_recursive_template
 from .yaml import yaml
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ def default_if_none(cls, v, field: ModelField):
 
 
 class BaseYamlConfigModel(YamlModel):
-    config_path: Path = Field(Path("."), exclude=True)
+    config_path: Path = Field(Path(".").absolute(), exclude=True)
 
     def __or__(self, other: "Model") -> "Model":
         return type(self).parse_obj(
@@ -38,9 +38,14 @@ class BaseYamlConfigModel(YamlModel):
     def parse_file(
         cls: Type["Model"],
         path: Union[str, Path],
+        resolve: bool = False,
         **kwargs,
     ) -> "Model":
         obj = super(BaseYamlConfigModel, cls).parse_file(path, **kwargs)
+        if resolve:
+            resolved = render_recursive_template(obj.json(), obj.dict())
+            obj = cls.parse_raw(resolved)
+
         obj.config_path = Path(path)
         return obj
 

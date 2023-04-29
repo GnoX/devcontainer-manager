@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 
 from pydantic import Field, validator
@@ -9,20 +10,24 @@ from .settings import Settings
 
 
 class GlobalConfig(BaseYamlConfigModelWithBase):
-    defaults: Config = Field(
-        default_factory=Config,
-        description="default values for all configs for the current environment",
-    )
     template_dir: Path = Field(
         Path("./templates"),
         description="directory for global templates",
     )
     override_config_path: Path = Field(
         Path(".devcontainer/overrides.yaml"),
-        description=("default path for per-project override config (. is in '.devcontainer/')"),
+        description="default path for per-project override config (. is in '.devcontainer/')",
+    )
+
+    default_config_path: Path = Field(
+        "default_config.yaml",
+        description="path to global config that will be used as base for all other configs",
     )
 
     _not_none = validator("*", pre=True, allow_reuse=True)(default_if_none)
+
+    class Config:
+        keep_untouched = (cached_property,)
 
     def load_alias_config(self) -> AliasConfig:
         alias_config_path = self.config_path.parent / DEFAULT_ALIAS_FILENAME
@@ -30,6 +35,13 @@ class GlobalConfig(BaseYamlConfigModelWithBase):
             AliasConfig().write_yaml(alias_config_path)
 
         return AliasConfig.parse_file(alias_config_path)
+
+    @cached_property
+    def defaults(self):
+        config_path = self.default_config_path
+        if not self.default_config_path.is_absolute():
+            config_path = self.config_path.parent / self.default_config_path
+        return Config.parse_file(config_path)
 
     @classmethod
     def load(
@@ -41,6 +53,14 @@ class GlobalConfig(BaseYamlConfigModelWithBase):
                 global_config = GlobalConfig()
                 global_config.write_yaml(config_path, with_descriptions=True)
                 global_config.config_path = config_path
-                return global_config
+                return cls.load(settings)
             return None
-        return GlobalConfig.parse_file(config_path)
+
+        global_config = GlobalConfig.parse_file(config_path, resolve=True)
+        default_config_path = global_config.default_config_path
+        if not default_config_path.exists():
+            if not default_config_path.is_absolute():
+                default_config_path = config_path.parent / default_config_path
+            Config().write_yaml(default_config_path, with_descriptions=True)
+
+        return global_config
