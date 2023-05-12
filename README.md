@@ -165,14 +165,14 @@ contains following options:
 ```yaml
 base_config: []
 
-# default values for all configs for the current environment
-defaults: {}
-
 # directory for global templates
 template_dir: templates
 
 # default path for per-project override config (. is in '.devcontainer/')
 override_config_path: .devcontainer/overrides.yaml
+
+# path to global config that will be used as base for all other configs
+default_config_path: '{{ template_dir }}/default.yaml'
 ```
 [//]: # (global_config_block_end)
 
