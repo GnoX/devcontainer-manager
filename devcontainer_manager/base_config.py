@@ -46,7 +46,7 @@ class BaseYamlConfigModel(YamlModel):
             resolved = render_recursive_template(obj.json(), obj.dict())
             obj = cls.parse_raw(resolved)
 
-        obj.config_path = Path(path)
+        obj.config_path = Path(path).absolute()
         return obj
 
     def yaml(self, with_descriptions=False, **dict_kwargs):

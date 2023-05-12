@@ -26,7 +26,10 @@ class AliasConfig(BaseYamlConfigModel):
     def resolve(self, alias: str):
         if isinstance(alias, Path):
             alias = alias.as_posix()
-        return self.aliases.get(alias, alias)
+        alias_path = self.aliases.get(alias, alias)
+        if not alias_path.is_absolute():
+            alias_path = self.config_path.parent / alias_path
+        return alias_path
 
     def path_to_alias(self, path: Path):
         path = path.resolve()

@@ -21,10 +21,18 @@ def complete_aliases(param_name: str = "alias"):
 
 @app.command()
 def add(alias: str = typer.Argument(...), config_path: str = typer.Argument(...)):
-    path = Path(config_path)
-    alias_config = GlobalConfig.load().load_alias_config()
-    alias_config.aliases[alias] = path.resolve().as_posix()
+    path = Path(config_path).resolve()
+    global_config = GlobalConfig.load()
+    global_config_dir = global_config.config_path.resolve().parent
+
+    alias_config = global_config.load_alias_config()
+
+    if path.as_posix().startswith(global_config_dir.as_posix()):
+        path = path.relative_to(global_config_dir)
+
+    alias_config.aliases[alias] = path
     alias_config.write_yaml()
+    typer.echo(f"Alias created: '{typer.style(alias, fg=typer.colors.BLUE)}'")
 
 
 @app.command()
@@ -53,8 +61,11 @@ def list():
     typer.echo("Available aliases:")
     aliases_msg = ""
     for alias, path in global_config.load_alias_config().aliases.items():
-        file_exists = Path(path).exists()
-        file_color = typer.colors.GREEN if file_exists else typer.colors.RED
+        path = Path(path)
+        if not path.is_absolute():
+            path = global_config.config_path.parent / path
+
+        file_color = typer.colors.GREEN if path.exists() else typer.colors.RED
         aliases_msg += (
             f"  {typer.style(alias, fg=typer.colors.BLUE)}: "
             f"{typer.style(path, fg=file_color)}"

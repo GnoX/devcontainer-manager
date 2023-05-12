@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- moved default config to separate file `.devcontainer_manager/default_config.yaml`
+- moved default config to separate file `.devcontainer_manager/templates/default.yaml`
+
+### Fixed
+- fixed alias config not resolving relative alias template paths
 
 ## [1.3.2] - 2023-04-29
 ### Added
