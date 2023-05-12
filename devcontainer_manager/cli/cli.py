@@ -27,7 +27,7 @@ def generate(
     build: bool = typer.Option(False, "--build", "-b"),
     print_config: bool = typer.Option(False, "--print-config", "--print", "-p"),
 ):
-    global_config = GlobalConfig.load(create_if_not_exist=True)
+    global_config: GlobalConfig = GlobalConfig.load(create_if_not_exist=True)
     alias_config = global_config.load_alias_config()
     from_override = not templates
 
@@ -93,7 +93,11 @@ def create_template(
         if global_config.template_dir.is_absolute():
             typer.echo("Error: --local not specified but path is absolute", err=True)
             raise typer.Exit(1)
-        path = global_config.config_path.parent / global_config.template_dir / path
+        template_dir = global_config.template_dir
+        if not template_dir.is_absolute():
+            template_dir = global_config.config_path.parent.absolute() / template_dir
+
+        path = template_dir / path
 
     if path.exists() and not force:
         if not typer.confirm(f"Config '{path}' already exists, overwrite?"):
@@ -103,10 +107,7 @@ def create_template(
     typer.echo(f"Config written to '{typer.style(path, typer.colors.GREEN)}'")
 
     if global_template:
-        alias_config = global_config.load_alias_config()
-        alias_config.aliases[path.stem] = path.as_posix()
-        alias_config.write_yaml()
-        typer.echo(f"Alias created: '{typer.style(path.stem, fg=typer.colors.BLUE)}'")
+        alias.add(path.stem, path.as_posix())
 
 
 @app.command()

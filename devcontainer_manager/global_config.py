@@ -20,7 +20,7 @@ class GlobalConfig(BaseYamlConfigModelWithBase):
     )
 
     default_config_path: Path = Field(
-        "default_config.yaml",
+        "{{ template_dir }}/default.yaml",
         description="path to global config that will be used as base for all other configs",
     )
 
@@ -47,7 +47,7 @@ class GlobalConfig(BaseYamlConfigModelWithBase):
     def load(
         cls, settings: Settings = Settings(), create_if_not_exist: bool = False
     ) -> "GlobalConfig":
-        config_path = settings.global_config_path
+        config_path = settings.global_config_path.resolve()
         if not config_path.exists():
             if create_if_not_exist:
                 global_config = GlobalConfig()
@@ -58,9 +58,9 @@ class GlobalConfig(BaseYamlConfigModelWithBase):
 
         global_config = GlobalConfig.parse_file(config_path, resolve=True)
         default_config_path = global_config.default_config_path
-        if not default_config_path.exists():
-            if not default_config_path.is_absolute():
-                default_config_path = config_path.parent / default_config_path
-            Config().write_yaml(default_config_path, with_descriptions=True)
+        if not default_config_path.is_absolute():
+            default_config_path = config_path.parent / default_config_path
+            if not default_config_path.exists():
+                Config().write_yaml(default_config_path, with_descriptions=True)
 
         return global_config
