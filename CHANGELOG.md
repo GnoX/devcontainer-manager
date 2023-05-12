@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - moved default config to separate file `.devcontainer_manager/templates/default.yaml`
+- changed devcontainer json extensions option from deprecated `extensions` to
+  `customizations/vscode/extensions`
 
 ### Fixed
 - fixed alias config not resolving relative alias template paths

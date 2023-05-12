@@ -27,14 +27,18 @@
         {%- endfor %}
     ],
     {%- if cookiecutter.devcontainer.extensions|length > 0 %}
-    "extensions": [
-        {%- for extension in cookiecutter.devcontainer.extensions %}
-        "{{ extension }}"
-        {%- if not loop.last -%}
-        ,
-        {%- endif %}
-        {%- endfor %}
-    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                {%- for extension in cookiecutter.devcontainer.extensions %}
+                "{{ extension }}"
+                {%- if not loop.last -%}
+                ,
+                {%- endif %}
+                {%- endfor %}
+            ]
+        }
+    },
     {%- endif %}
     {%- if cookiecutter.devcontainer.shutdown_action is not none %}
     "shutdownAction": "{{ cookiecutter.devcontainer.shutdown_action }}"
