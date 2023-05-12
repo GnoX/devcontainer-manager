@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2023-05-12
 ### Changed
 - moved default config to separate file `.devcontainer_manager/templates/default.yaml`
 - changed devcontainer json extensions option from deprecated `extensions` to
