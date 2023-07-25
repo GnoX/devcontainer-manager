@@ -12,7 +12,7 @@ class AliasConfig(BaseYamlConfigModel):
     aliases: Optional[Dict[str, Path]] = Field(
         default_factory=dict,
         description=(
-            "aliases for templates, can be added using,\n" "`devcontainer_manager alias --help`"
+            "aliases for templates, can be added using,\n`devcontainer_manager alias --help`"
         ),
     )
 
@@ -33,5 +33,9 @@ class AliasConfig(BaseYamlConfigModel):
 
     def path_to_alias(self, path: Path):
         path = path.resolve()
-        ret = [k for k, p in self.aliases.items() if p.resolve() == path][0]
+        ret = [
+            k
+            for k, p in self.aliases.items()
+            if p.resolve() == path or path.relative_to(self.config_path.parent) == p
+        ][0]
         return path if not ret else ret

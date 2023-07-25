@@ -44,7 +44,7 @@ def generate(
             raise typer.Exit(1)
         templates = [template_path.as_posix()]
     else:
-        templates = [alias_config.aliases.get(t, t) for t in templates]
+        templates = [alias_config.resolve(t) for t in templates]
 
     configs = [Config.parse_file(t).merge_bases() for t in templates]
     merged_config = global_config.merge_bases().defaults | reduce(lambda a, b: a | b, configs)
