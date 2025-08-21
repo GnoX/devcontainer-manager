@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.2] - 2025-08-21
+### Fixed
+- temporarily pin pydantic and pydantic_yaml
+
 ## [1.4.1] - 2023-07-25
 ### Fixed
 - fixed alias resolving when using as argument to `generate`
